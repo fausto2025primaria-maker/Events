@@ -571,6 +571,325 @@ function clamp(v){ return Math.max(0, Math.min(9, v)); }
 const statNames = { menjar:"Menjar", moral:"Moral", riquesa:"Riquesa", poble:"Poble", exercit:"Exèrcit" };
 
 const cards = [
+  {
+  title:"Guerra",
+  subtitle:"Conflicte obert entre bàndols",
+  type:"Guerra",
+  css:"guerra",
+  image:"Guerra.jpeg",
+  stats:{ riquesa:-1, poble:-1 },
+  rules:["Només si l’exèrcit és suficient o ja hi ha guerra"],
+  effectMain:"-1 riquesa | -1 poble",
+  effectExtra:"La tensió esclata i el regne entra en una etapa dura.",
+  flavour:"Quan parla la guerra, callen els mercats.",
+  canAppear:(w)=>w.exercit>=3 || w.enGuerra,
+  getWeight:(w)=>1+(w.enGuerra?2:0),
+  applyEffect:(w)=>{ w.riquesa=clamp(w.riquesa-1); w.poble=clamp(w.poble-1); w.enGuerra=true; }
+},
+
+{
+  title:"Heretgia secreta",
+  subtitle:"Idees prohibides s’escampen",
+  type:"Intriga",
+  css:"intriga",
+  image:"Heretgia.jpeg",
+  stats:{ moral:-2 },
+  rules:["Més probable amb moral baixa"],
+  effectMain:"-2 moral",
+  effectExtra:"La població comença a dubtar de l’ordre establit.",
+  flavour:"Les idees poden fer més mal que les espases.",
+  canAppear:()=>true,
+  getWeight:(w)=>1+(w.moral<=3?3:0),
+  applyEffect:(w)=>{ w.moral=clamp(w.moral-2); }
+},
+
+{
+  title:"Hivern cru",
+  subtitle:"El fred colpeja fort",
+  type:"Estació",
+  css:"estacio",
+  image:"Hivern.jpeg",
+  stats:{ menjar:-2 },
+  rules:["No apareix si ja és hivern","Més probable en tardor"],
+  effectMain:"estació: hivern | -2 menjar",
+  effectExtra:"El fred castiga reserves, treball i ànims.",
+  flavour:"L’hivern no necessita exèrcit per conquistar un regne.",
+  canAppear:(w)=>w.estacio!=="hivern",
+  getWeight:(w)=>1+(w.estacio==="tardor"?4:0),
+  applyEffect:(w)=>{ w.estacio="hivern"; w.menjar=clamp(w.menjar-2); }
+},
+
+{
+  title:"Hospicis i cures",
+  subtitle:"Ajuda als més dèbils",
+  type:"Religió",
+  css:"religio",
+  image:"Hospici.jpeg",
+  stats:{ moral:+1, poble:+1 },
+  rules:["Més probable després de fam o malaltia"],
+  effectMain:"+1 moral | +1 poble",
+  effectExtra:"Els espais de cura alleugen el sofriment del poble.",
+  flavour:"Quan tot falla, encara queda qui cus les ferides.",
+  canAppear:()=>true,
+  getWeight:(w)=>1+(w.moral<=4?1:0)+(w.ultimaCarta==="Fam al poble"?1:0),
+  applyEffect:(w)=>{ w.moral=clamp(w.moral+1); w.poble=clamp(w.poble+1); }
+},
+
+{
+  title:"Impostos",
+  subtitle:"Recaptació habitual de la corona",
+  type:"Economia",
+  css:"economia",
+  image:"Impostos.jpeg",
+  stats:{ riquesa:+1, moral:-1 },
+  rules:["Sempre disponible"],
+  effectMain:"+1 riquesa | -1 moral",
+  effectExtra:"La corona cobra, però el poble ho nota.",
+  flavour:"Sempre hi ha una mà estesa; quasi mai és per ajudar.",
+  canAppear:()=>true,
+  getWeight:(w)=>1+(w.riquesa<=4?2:0),
+  applyEffect:(w)=>{ w.riquesa=clamp(w.riquesa+1); w.moral=clamp(w.moral-1); }
+},
+
+{
+  title:"Impostos abusius",
+  subtitle:"La càrrega fiscal es dispara",
+  type:"Crisi",
+  css:"crisi",
+  image:"ImpostosAbusius.jpeg",
+  stats:{ riquesa:+2, moral:-2 },
+  rules:["Més probable si la corona va curta de diners"],
+  effectMain:"+2 riquesa | -2 moral",
+  effectExtra:"El regne guanya or, però perd paciència.",
+  flavour:"Quan els impostos pugen massa, la ràbia aprén a comptar.",
+  canAppear:(w)=>w.riquesa<=7 && w.moral>=1,
+  getWeight:(w)=>1+(w.riquesa<=3?3:0)+(w.moral<=3?1:0),
+  applyEffect:(w)=>{ w.riquesa=clamp(w.riquesa+2); w.moral=clamp(w.moral-2); }
+},
+
+{
+  title:"Incendi",
+  subtitle:"Les flames s’enduen part del poble",
+  type:"Crisi",
+  css:"crisi",
+  image:"Incendi.jpeg",
+  stats:{ riquesa:-2, poble:-1 },
+  rules:["Sempre possible","Més probable amb desordre"],
+  effectMain:"-2 riquesa | -1 poble",
+  effectExtra:"El foc destrueix cases, tallers o reserves.",
+  flavour:"El foc sempre corre més ràpid que les ordres.",
+  canAppear:()=>true,
+  getWeight:(w)=>1+(w.moral<=4?1:0),
+  applyEffect:(w)=>{ w.riquesa=clamp(w.riquesa-2); w.poble=clamp(w.poble-1); }
+},
+
+{
+  title:"Inquisició",
+  subtitle:"Persecució de les idees prohibides",
+  type:"Religió",
+  css:"religio",
+  image:"Inquisicio.jpeg",
+  stats:{ moral:+1, poble:-1 },
+  rules:["Després d’Heretgia secreta"],
+  effectMain:"+1 moral | -1 poble",
+  effectExtra:"L’autoritat religiosa actua amb duresa.",
+  flavour:"El foc purifica... o això diuen.",
+  canAppear:(w)=>w.ultimaCarta==="Heretgia secreta",
+  getWeight:()=>3,
+  applyEffect:(w)=>{ w.moral=clamp(w.moral+1); w.poble=clamp(w.poble-1); }
+},
+
+{
+  title:"Inversió en terres",
+  subtitle:"Nous camps i millores agrícoles",
+  type:"Economia",
+  css:"economia",
+  image:"InversioTerres.jpeg",
+  stats:{ riquesa:-1, menjar:+2 },
+  rules:["Només amb prou riquesa","No apareix en hivern"],
+  effectMain:"-1 riquesa | +2 menjar",
+  effectExtra:"El regne aposta pel camp per créixer.",
+  flavour:"Alguns planten blat; altres, poder.",
+  canAppear:(w)=>w.riquesa>=2 && w.estacio!=="hivern",
+  getWeight:(w)=>1+(w.menjar<=4?2:0),
+  applyEffect:(w)=>{ w.riquesa=clamp(w.riquesa-1); w.menjar=clamp(w.menjar+2); }
+},
+
+{
+  title:"Itinerants",
+  subtitle:"Arriben artistes i viatgers",
+  type:"Societat",
+  css:"societat",
+  image:"Itinerants.jpeg",
+  stats:{ moral:+1, poble:+1 },
+  rules:["Més probable en temps de calma"],
+  effectMain:"+1 moral | +1 poble",
+  effectExtra:"La vila rep novetats, històries i moviment.",
+  flavour:"De vegades un camí porta més que pols.",
+  canAppear:(w)=>!w.enGuerra,
+  getWeight:()=>1,
+  applyEffect:(w)=>{ w.moral=clamp(w.moral+1); w.poble=clamp(w.poble+1); }
+},
+
+{
+  title:"Justícia exemplar",
+  subtitle:"Una sentència pública imposa ordre",
+  type:"Política",
+  css:"politica",
+  image:"Justicia.jpeg",
+  stats:{ moral:+1 },
+  rules:["Més probable després de caos o bandolers"],
+  effectMain:"+1 moral",
+  effectExtra:"El poder vol demostrar que encara controla la situació.",
+  flavour:"Quan la justícia es fa visible, també ho fa la por.",
+  canAppear:()=>true,
+  getWeight:(w)=>1+(w.ultimaCarta==="Bandolers"?1:0)+(w.ultimaCarta==="Caos al regne"?1:0),
+  applyEffect:(w)=>{ w.moral=clamp(w.moral+1); }
+},
+
+{
+  title:"Llops al ramat",
+  subtitle:"Les bèsties ataquen de nit",
+  type:"Crisi",
+  css:"crisi",
+  image:"Llops.jpeg",
+  stats:{ menjar:-1, poble:-1 },
+  rules:["Més probable en hivern o amb fam"],
+  effectMain:"-1 menjar | -1 poble",
+  effectExtra:"El camp pateix pèrdues i por.",
+  flavour:"Quan l’hivern apreta, també els llops s’acosten.",
+  canAppear:()=>true,
+  getWeight:(w)=>1+(w.estacio==="hivern"?2:0),
+  applyEffect:(w)=>{ w.menjar=clamp(w.menjar-1); w.poble=clamp(w.poble-1); }
+},
+
+{
+  title:"Malaltia contagiosa",
+  subtitle:"Una epidèmia s’estén",
+  type:"Crisi",
+  css:"crisi",
+  image:"Malaltia.jpeg",
+  stats:{ poble:-1, moral:-1 },
+  rules:["Més probable en hivern"],
+  effectMain:"-1 poble | -1 moral",
+  effectExtra:"La malaltia corre més ràpid que els rumors.",
+  flavour:"No avisa, no crida... però arriba.",
+  canAppear:(w)=>w.poble>=4 || w.menjar<=3,
+  getWeight:(w)=>1+(w.estacio==="hivern"?3:0),
+  applyEffect:(w)=>{ w.poble=clamp(w.poble-1); w.moral=clamp(w.moral-1); }
+},
+
+{
+  title:"Mercader oriental",
+  subtitle:"Productes i idees de lluny",
+  type:"Comerç",
+  css:"comerc",
+  image:"MercaderOriental.jpeg",
+  stats:{ riquesa:+2, moral:+1 },
+  rules:["No en guerra","Més probable amb camins segurs"],
+  effectMain:"+2 riquesa | +1 moral",
+  effectExtra:"Arriben mercaderies noves i un aire de món gran.",
+  flavour:"Alguns viatges porten més que espècies.",
+  canAppear:(w)=>!w.enGuerra,
+  getWeight:(w)=>1+(w.ultimaCarta==="Camins segurs"?1:0)+(w.ultimaCarta==="Caravana comercial"?1:0),
+  applyEffect:(w)=>{ w.riquesa=clamp(w.riquesa+2); w.moral=clamp(w.moral+1); }
+},
+
+{
+  title:"Mercat",
+  subtitle:"Jornada intensa d’intercanvis",
+  type:"Comerç",
+  css:"comerc",
+  image:"Mercat.jpeg",
+  stats:{ riquesa:+2 },
+  rules:["No apareix en hivern","No en guerra"],
+  effectMain:"+2 riquesa",
+  effectExtra:"Els productes circulen i el regne prospera.",
+  flavour:"On hi ha mercat, hi ha oportunitat.",
+  canAppear:(w)=>w.estacio!=="hivern" && !w.enGuerra,
+  getWeight:(w)=>1+(w.moral>=6?1:0),
+  applyEffect:(w)=>{ w.riquesa=clamp(w.riquesa+2); }
+},
+
+{
+  title:"Miracle diví",
+  subtitle:"Un fet inesperat commou el poble",
+  type:"Religió",
+  css:"religio",
+  image:"MiracleDivi.jpeg",
+  stats:{ moral:+2, poble:+1 },
+  rules:["Rara","Més probable amb molta fe"],
+  effectMain:"+2 moral | +1 poble",
+  effectExtra:"La població recupera ànim i confiança.",
+  flavour:"Hi ha dies en què el poble necessita una prova del cel.",
+  canAppear:()=>true,
+  getWeight:(w)=>1+(w.moral<=3?1:0),
+  applyEffect:(w)=>{ w.moral=clamp(w.moral+2); w.poble=clamp(w.poble+1); }
+},
+
+{
+  title:"Monestir actiu",
+  subtitle:"Fe, treball i silenci",
+  type:"Religió",
+  css:"religio",
+  image:"Monestir.jpeg",
+  stats:{ moral:+1 },
+  rules:["Més probable en temps de calma"],
+  effectMain:"+1 moral",
+  effectExtra:"El monestir aporta ordre espiritual i ajuda discreta.",
+  flavour:"Alguns murs no defenen amb armes, sinó amb paciència.",
+  canAppear:(w)=>!w.enGuerra,
+  getWeight:()=>1,
+  applyEffect:(w)=>{ w.moral=clamp(w.moral+1); }
+},
+
+{
+  title:"Mort del rei",
+  subtitle:"La corona queda buida",
+  type:"Política",
+  css:"politica",
+  image:"MortdelRei.jpeg",
+  stats:{ moral:-2, poble:-1 },
+  rules:["Rara","Pot obrir una etapa d’inestabilitat"],
+  effectMain:"-2 moral | -1 poble",
+  effectExtra:"La mort del sobirà sacseja el regne.",
+  flavour:"Quan mor un rei, no sols s’apaga una vida: tremola un ordre.",
+  canAppear:()=>true,
+  getWeight:()=>1,
+  applyEffect:(w)=>{ w.moral=clamp(w.moral-2); w.poble=clamp(w.poble-1); }
+},
+
+{
+  title:"Naixen cries",
+  subtitle:"El ramat creix amb nova vida",
+  type:"Economia",
+  css:"economia",
+  image:"NaixenCries.jpeg",
+  stats:{ poble:+1, menjar:+1 },
+  rules:["No en hivern","Més probable en primavera"],
+  effectMain:"+1 poble | +1 menjar",
+  effectExtra:"El bestiar es renova i el camp respira.",
+  flavour:"Quan naix una cria, el futur fa un sorollet menut.",
+  canAppear:(w)=>w.estacio!=="hivern",
+  getWeight:(w)=>1+(w.estacio==="primavera"?2:0),
+  applyEffect:(w)=>{ w.poble=clamp(w.poble+1); w.menjar=clamp(w.menjar+1); }
+},
+
+{
+  title:"Nit de por",
+  subtitle:"Rumors, ombres i tensió",
+  type:"Crisi",
+  css:"crisi",
+  image:"NitdePor.jpeg",
+  stats:{ moral:-2 },
+  rules:["Més probable amb caos o inseguretat"],
+  effectMain:"-2 moral",
+  effectExtra:"La por corre pels carrers i ningú dorm del tot.",
+  flavour:"Hi ha nits en què l’ombra pesa més que la pedra.",
+  canAppear:()=>true,
+  getWeight:(w)=>1+(w.moral<=4?1:0),
+  applyEffect:(w)=>{ w.moral=clamp(w.moral-2); }
+}
 
   {
   title:"Cries noves al ramat",
