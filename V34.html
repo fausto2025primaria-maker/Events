@@ -584,7 +584,16 @@ const cards = [
   rules:["Més probable després de bones condicions"],
   effectMain:"+1 menjar",
   effectExtra:"Els animals es mantenen en bon estat i milloren la producció.",
-  flavour:"Un ramat sa és mig graner assegurat.",
+  flavour:"Un ramat sa és mig graner assegurat. Els animals eren una part fonamental de la vida a l’edat mitjana. No només servien per alimentar les persones, sinó també per treballar al camp i transportar mercaderies.
+Quan els animals estaven sans, els camperols podien llaurar la terra amb més facilitat i augmentar la producció d’aliments.
+Els bous i els cavalls ajudaven en les tasques agrícoles, mentre que les ovelles proporcionaven llana per fer roba.
+A més, els animals sans significaven més carn, llet i altres productes essencials per a la dieta de la població.
+Això millorava la salut general de la gent i reduïa el risc de fam.
+També facilitava el comerç, ja que els excedents es podien vendre o intercanviar en els mercats.
+Quan no hi havia malalties entre els animals, els camperols no havien de gastar diners ni temps en cuidar-los o substituir-los.
+Això permetia estalviar recursos i invertir en altres necessitats del poble.
+Els animals també eren una riquesa, i tindre’n molts i sans era signe de prosperitat.
+Per això, mantindre els animals en bon estat era clau per a l’economia i l’estabilitat del regne.",
   canAppear:()=>true,
   getWeight:(w)=>1+(w.menjar<=4?1:0),
   applyEffect:(w)=>{ w.menjar=clamp(w.menjar+1); }
