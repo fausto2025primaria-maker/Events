@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tauler Visual dels Regnes amb Escuts</title>
+<style>
+:root{
+  --bg:#21160f;
+  --panel:#f3dfb5;
+  --panel2:#fff1cc;
+  --ink:#2b1b10;
+  --gold:#d6a332;
+  --red:#9e2f24;
+  --shadow:rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: Georgia, "Times New Roman", serif;
+  background:
+    radial-gradient(circle at top, rgba(255,230,170,.16), transparent 30%),
+    linear-gradient(135deg,#2d1b12,#140d09);
+  color:var(--ink);
+  min-height:100vh;
+}
+header{
+  color:#fff3cf;
+  text-align:center;
+  padding:18px 12px 10px;
+  border-bottom:4px solid var(--gold);
+}
+h1{
+  margin:0;
+  font-size:clamp(30px,5vw,58px);
+  letter-spacing:1px;
+  text-shadow:0 3px 0 #000;
+}
+.subtitle{
+  margin-top:6px;
+  font-size:18px;
+  color:#f8d98b;
+}
+.toolbar{
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:10px;
+  padding:14px;
+}
+button, select, input{
+  font-family:inherit;
+  font-size:16px;
+}
+button{
+  border:2px solid #5b3418;
+  background:linear-gradient(#ffe09a,#c58a2c);
+  color:#2b1708;
+  border-radius:12px;
+  padding:10px 14px;
+  cursor:pointer;
+  font-weight:bold;
+  box-shadow:0 3px 0 #5b3418;
+}
+button:active{transform:translateY(2px);box-shadow:0 1px 0 #5b3418}
+.board{
+  display:grid;
+  grid-template-columns:repeat(5, minmax(180px,1fr));
+  gap:14px;
+  padding:16px;
+}
+.kingdom{
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border:5px solid #5a3318;
+  border-radius:24px;
+  box-shadow:0 10px 22px var(--shadow);
+  overflow:hidden;
+  position:relative;
+}
+.kingdom.leader{
+  outline:6px solid var(--gold);
+  transform:translateY(-4px);
+}
+.crown{
+  display:none;
+  position:absolute;
+  top:6px;
+  right:10px;
+  font-size:34px;
+  filter:drop-shadow(0 2px 2px #000);
+  z-index:5;
+}
+.kingdom.leader .crown{display:block}
+.kingdom-header{
+  background:linear-gradient(90deg,#5b241c,#8b3a26);
+  color:#fff1c2;
+  padding:14px 10px;
+  text-align:center;
+  border-bottom:4px solid #3b1c10;
+}
+.name{
+  width:100%;
+  text-align:center;
+  font-size:22px;
+  font-weight:bold;
+  border:0;
+  background:rgba(255,255,255,.12);
+  color:#fff6d8;
+  border-radius:10px;
+  padding:6px;
+}
+.speciality{
+  margin-top:8px;
+  width:100%;
+  border-radius:10px;
+  padding:6px;
+  background:#fff3ce;
+  border:2px solid #3b1c10;
+}
+.shield-wrap{
+  text-align:center;
+  padding-top:12px;
+}
+.shield{
+  width:100px;
+  height:112px;
+  margin:0 auto 8px;
+  border:5px solid #2c170c;
+  border-radius:14px;
+  overflow:hidden;
+  background:#2a1a10;
+  box-shadow:0 5px 10px rgba(0,0,0,.35);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff4c7;
+  font-size:42px;
+}
+.shield img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.file-label{
+  display:inline-block;
+  background:#ead09b;
+  border:2px solid #6a421f;
+  border-radius:10px;
+  padding:6px 8px;
+  font-weight:bold;
+  cursor:pointer;
+  font-size:14px;
+  margin-bottom:4px;
+}
+.file-label input{display:none}
+.resources{
+  padding:8px 12px 14px;
+}
+.resource{
+  background:rgba(255,255,255,.55);
+  border:3px solid #7d5029;
+  border-radius:16px;
+  margin:9px 0;
+  padding:8px;
+}
+.resource.risk{
+  border-color:var(--red);
+  background:#ffd8d2;
+  animation:pulse 1.2s infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 rgba(158,47,36,0)}
+  50%{box-shadow:0 0 18px rgba(158,47,36,.65)}
+  100%{box-shadow:0 0 0 rgba(158,47,36,0)}
+}
+.res-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:20px;
+  font-weight:bold;
+}
+.controls{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin-top:6px;
+}
+.value{
+  width:64px;
+  text-align:center;
+  font-size:24px;
+  font-weight:bold;
+  padding:4px;
+  border:2px solid #5b3418;
+  border-radius:10px;
+  background:#fff7df;
+}
+.smallbtn{
+  padding:5px 9px;
+  border-radius:9px;
+  font-size:16px;
+}
+.progress{
+  height:12px;
+  background:#e3cfa2;
+  border:2px solid #6a421f;
+  border-radius:20px;
+  margin-top:8px;
+  overflow:hidden;
+}
+.bar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#9f2f25,#e8aa36,#3f7a42);
+}
+.total{
+  text-align:center;
+  font-size:20px;
+  font-weight:bold;
+  padding:10px;
+  background:#ead09b;
+  border-top:3px solid #6a421f;
+}
+.legend{
+  margin:0 16px 20px;
+  background:rgba(255,241,204,.92);
+  border:4px solid #5a3318;
+  border-radius:18px;
+  padding:14px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  font-size:17px;
+}
+.legend b{color:#6d2c1d}
+@media(max-width:1000px){
+  .board{grid-template-columns:repeat(2,1fr)}
+  .legend{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .board{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏰 Tauler Visual dels Regnes</h1>
+  <div class="subtitle">Escuts, recursos, especialització, risc i lideratge</div>
+</header>
+
+<div class="toolbar">
+  <button onclick="newTurn()">🔄 Nou torn: ingressos i consum</button>
+  <button onclick="markLeader()">👑 Actualitzar líder</button>
+  <button onclick="resetBoard()">🧹 Reiniciar tauler</button>
+  <button onclick="saveData(true)">💾 Guardar</button>
+</div>
+
+<main class="board" id="board"></main>
+
+<section class="legend">
+  <div><b>🛡️ Escuts:</b> cada regne pot pujar el seu escut. Es guarda en aquest navegador.</div>
+  <div><b>⚠️ Zona de risc:</b> si un recurs baixa de 5, apareix en roig.</div>
+  <div><b>🔄 Nou torn:</b> suma ingressos d’especialització i resta consum de menjar.</div>
+</section>
+
+<script>
+const defaultKingdoms = [
+  {name:"Regne 1", spec:"agricola", icon:"🌾", shield:"", food:20, gold:50, force:10, pop:15},
+  {name:"Regne 2", spec:"militar", icon:"⚔️", shield:"", food:20, gold:50, force:10, pop:15},
+  {name:"Regne 3", spec:"comercial", icon:"💰", shield:"", food:20, gold:50, force:10, pop:15},
+  {name:"Regne 4", spec:"cultural", icon:"📚", shield:"", food:20, gold:50, force:10, pop:15},
+  {name:"Regne 5", spec:"equilibrat", icon:"🛡️", shield:"", food:20, gold:50, force:10, pop:15}
+];
+
+let kingdoms = JSON.parse(localStorage.getItem("regnesTaulerEscuts")) || defaultKingdoms;
+
+const specIcons = {
+  agricola:"🌾",
+  militar:"⚔️",
+  comercial:"💰",
+  cultural:"📚",
+  equilibrat:"🛡️"
+};
+
+function render(){
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+  kingdoms.forEach((k,i)=>{
+    const total = k.food + k.gold + (k.force*2) + (k.pop*3);
+    const shieldContent = k.shield
+      ? `<img src="${k.shield}" alt="Escut de ${k.name}">`
+      : `<span>${k.icon}</span>`;
+
+    const card = document.createElement("section");
+    card.className = "kingdom";
+    card.dataset.index = i;
+    card.innerHTML = `
+      <div class="crown">👑</div>
+      <div class="kingdom-header">
+        <input class="name" value="${k.name}" onchange="updateName(${i}, this.value)">
+        <select class="speciality" onchange="updateSpec(${i}, this.value)">
+          <option value="agricola" ${k.spec==="agricola"?"selected":""}>🌾 Agrícola</option>
+          <option value="militar" ${k.spec==="militar"?"selected":""}>⚔️ Militar</option>
+          <option value="comercial" ${k.spec==="comercial"?"selected":""}>💰 Comercial</option>
+          <option value="cultural" ${k.spec==="cultural"?"selected":""}>📚 Cultural</option>
+          <option value="equilibrat" ${k.spec==="equilibrat"?"selected":""}>🛡️ Equilibrat</option>
+        </select>
+      </div>
+
+      <div class="shield-wrap">
+        <div class="shield">${shieldContent}</div>
+        <label class="file-label">
+          Canviar escut
+          <input type="file" accept="image/*" onchange="uploadShield(${i}, this)">
+        </label>
+      </div>
+
+      <div class="resources">
+        ${resourceHTML(i,"food","🌾 Menjar",k.food)}
+        ${resourceHTML(i,"gold","💰 Or",k.gold)}
+        ${resourceHTML(i,"force","🛡️ Força",k.force)}
+        ${resourceHTML(i,"pop","👥 Població",k.pop)}
+      </div>
+      <div class="total">Valor total: ${total}</div>
+    `;
+    board.appendChild(card);
+  });
+  updateRisks();
+  markLeader(false);
+  saveData(false);
+}
+
+function resourceHTML(i,key,label,value){
+  const percent = Math.min(100, Math.max(0, value));
+  return `
+    <div class="resource" id="box-${i}-${key}">
+      <div class="res-top"><span>${label}</span><span>${value}</span></div>
+      <div class="controls">
+        <button class="smallbtn" onclick="changeRes(${i},'${key}',-10)">-10</button>
+        <button class="smallbtn" onclick="changeRes(${i},'${key}',-5)">-5</button>
+        <input class="value" type="number" value="${value}" onchange="setRes(${i},'${key}',this.value)">
+        <button class="smallbtn" onclick="changeRes(${i},'${key}',5)">+5</button>
+        <button class="smallbtn" onclick="changeRes(${i},'${key}',10)">+10</button>
+      </div>
+      <div class="progress"><div class="bar" style="width:${percent}%"></div></div>
+    </div>
+  `;
+}
+
+function uploadShield(i, input){
+  const file = input.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e){
+    kingdoms[i].shield = e.target.result;
+    render();
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateName(i,value){
+  kingdoms[i].name = value;
+  saveData(false);
+}
+function updateSpec(i,value){
+  kingdoms[i].spec = value;
+  kingdoms[i].icon = specIcons[value];
+  render();
+}
+function setRes(i,key,value){
+  kingdoms[i][key] = Math.max(0, parseInt(value)||0);
+  render();
+}
+function changeRes(i,key,amount){
+  kingdoms[i][key] = Math.max(0, kingdoms[i][key] + amount);
+  render();
+}
+function updateRisks(){
+  kingdoms.forEach((k,i)=>{
+    ["food","gold","force","pop"].forEach(key=>{
+      const box = document.getElementById(`box-${i}-${key}`);
+      if(box && k[key] < 5) box.classList.add("risk");
+    });
+  });
+}
+function totalScore(k){
+  return k.food + k.gold + (k.force*2) + (k.pop*3);
+}
+function markLeader(showAlert=true){
+  document.querySelectorAll(".kingdom").forEach(c=>c.classList.remove("leader"));
+  let best = 0;
+  kingdoms.forEach((k,i)=>{
+    if(totalScore(k) > totalScore(kingdoms[best])) best = i;
+  });
+  const card = document.querySelector(`.kingdom[data-index="${best}"]`);
+  if(card) card.classList.add("leader");
+  if(showAlert) alert("👑 Líder actual: " + kingdoms[best].name);
+}
+function newTurn(){
+  kingdoms.forEach(k=>{
+    if(k.spec==="agricola") k.food += 5;
+    if(k.spec==="militar") k.force += 3;
+    if(k.spec==="comercial") k.gold += 5;
+    if(k.spec==="cultural") k.gold += 2;
+    if(k.spec==="equilibrat"){ k.food += 2; k.gold += 2; k.force += 1; }
+
+    const consumption = Math.ceil(k.pop / 5) * 2;
+    k.food -= consumption;
+    if(k.food < 0){
+      k.food = 0;
+      k.pop = Math.max(0, k.pop - 5);
+    }
+  });
+  render();
+}
+function saveData(showAlert=true){
+  localStorage.setItem("regnesTaulerEscuts", JSON.stringify(kingdoms));
+  if(showAlert) alert("💾 Tauler guardat en aquest navegador.");
+}
+function resetBoard(){
+  if(confirm("Segur que vols reiniciar tots els regnes i els escuts?")){
+    kingdoms = JSON.parse(JSON.stringify(defaultKingdoms));
+    localStorage.removeItem("regnesTaulerEscuts");
+    render();
+  }
+}
+render();
+</script>
+</body>
+</html>
