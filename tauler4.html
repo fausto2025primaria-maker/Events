@@ -48,7 +48,7 @@ button{margin:4px;padding:8px 12px;border-radius:10px;border:2px solid #5b3418;b
 <div><b>🔄 Nou torn:</b> aplica producció dels edificis i consum de menjar.</div>
 </div>
 <script>
-const escuts=["escut1.jpg","escut2.jpg","escut3.jpg","escut4.jpg","escut5.jpg"];
+const escuts=["escut1.png","escut2.png","escut3.png","escut4.png","escut5.png"];
 
 const edificisDisponibles=[
 {id:"granja",nom:"🌾 Granja",cost:20,efecte:"+5 menjar/torn"},
@@ -70,11 +70,11 @@ const edificisDisponibles=[
 ];
 
 const inicial=[
-{nom:"Regne 1",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
-{nom:"Regne 2",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
-{nom:"Regne 3",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
-{nom:"Regne 4",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
-{nom:"Regne 5",menjar:20,or:50,forca:10,poblacio:15,edificis:[]}
+{nom:"ElCastillo",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
+{nom:"Regne de Tani",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
+{nom:"Monterey",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
+{nom:"El nido del águila",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
+{nom:"Regne de Romànica",menjar:20,or:50,forca:10,poblacio:15,edificis:[]}
 ];
 
 let regnes=JSON.parse(localStorage.getItem("taulerRegnesEdificis"))||JSON.parse(JSON.stringify(inicial));
