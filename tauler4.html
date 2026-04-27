@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tauler dels Regnes amb Edificis</title>
+<style>
+body{margin:0;font-family:Georgia,"Times New Roman",serif;background:linear-gradient(135deg,#26170e,#100907);color:white;text-align:center}
+h1{margin:14px 0 4px;font-size:42px;color:#ffe2a1;text-shadow:0 3px 0 #000}
+.subtitle{color:#d8bd80;margin-bottom:10px}
+.toolbar{margin:10px}
+button,select,input{font-family:Georgia,"Times New Roman",serif}
+button{margin:4px;padding:8px 12px;border-radius:10px;border:2px solid #5b3418;background:linear-gradient(#ffe09a,#c58a2c);font-weight:bold;cursor:pointer}
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:12px}
+.card{background:#f3dfb5;color:#241408;border:5px solid #5b3418;border-radius:18px;padding:10px;box-shadow:0 8px 18px rgba(0,0,0,.4)}
+.card.leader{outline:6px solid gold}
+.escut{width:105px;height:125px;object-fit:cover;border:4px solid #1c0d06;border-radius:12px;background:#111}
+.nom{font-size:22px;font-weight:bold;margin:8px 0;background:#7b2d1e;color:#fff2c6;padding:6px;border-radius:10px}
+.recursos{background:#fff4d2;border:2px solid #8a5a2b;border-radius:12px;padding:8px;margin:8px 0}
+.recurs{display:flex;justify-content:space-between;align-items:center;margin:5px 0;font-size:18px}
+.recurs input{width:62px;text-align:center;font-size:18px;border:2px solid #5b3418;border-radius:8px;padding:3px}
+.risc{background:#ffcfca;border-radius:8px;padding:3px;color:#8b1e13;font-weight:bold}
+.edificis{margin-top:10px;background:#fff8df;border:2px solid #8a5a2b;border-radius:12px;padding:8px;min-height:120px}
+.edificis h3{margin:0 0 6px}
+.edifici{display:flex;justify-content:space-between;align-items:center;background:#ead09b;border:2px solid #7d5029;border-radius:10px;margin:5px 0;padding:5px 7px;font-weight:bold}
+.remove{background:#9e2f24;color:white;border:1px solid #4a100b;box-shadow:none;padding:3px 7px;border-radius:7px}
+.add-box{margin-top:8px;display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.add-box select{max-width:135px;padding:5px;border-radius:8px}
+.total{margin-top:8px;font-weight:bold;font-size:18px;color:#5b241c}
+.info{margin:8px 12px 20px;background:#fff1cc;color:#251508;border:4px solid #5b3418;border-radius:16px;padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:1000px){.board{grid-template-columns:repeat(2,1fr)}.info{grid-template-columns:1fr}}
+@media(max-width:600px){.board{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>🏰 Tauler dels Regnes</h1>
+<div class="subtitle">Recursos, escuts i edificis construïts</div>
+<div class="toolbar">
+<button onclick="guardar(true)">💾 Guardar</button>
+<button onclick="nouTorn()">🔄 Nou torn</button>
+<button onclick="marcarLider()">👑 Líder</button>
+<button onclick="reiniciar()">🧹 Reiniciar</button>
+</div>
+<div id="board" class="board"></div>
+<div class="info">
+<div><b>🏗️ Edificis:</b> cada regne pot afegir construccions.</div>
+<div><b>💾 Guardat:</b> es conserva en aquest navegador.</div>
+<div><b>🔄 Nou torn:</b> aplica producció dels edificis i consum de menjar.</div>
+</div>
+<script>
+const escuts=["escut1.jpg","escut2.jpg","escut3.jpg","escut4.jpg","escut5.jpg"];
+
+const edificisDisponibles=[
+{id:"granja",nom:"🌾 Granja",cost:20,efecte:"+5 menjar/torn"},
+{id:"cases",nom:"🏠 Cases",cost:15,efecte:"+5 població"},
+{id:"torre",nom:"🛡️ Torre",cost:15,efecte:"+5 força"},
+{id:"fusta",nom:"🌲 Tala de fusta",cost:10,efecte:"+5 or/torn"},
+{id:"cami",nom:"🛤️ Camí",cost:10,efecte:"+5 or/torn"},
+{id:"esglesia",nom:"⛪ Església",cost:20,efecte:"protecció"},
+{id:"moli",nom:"🌾 Molí",cost:30,efecte:"+10 menjar/torn"},
+{id:"vila",nom:"🏘️ Vila",cost:30,efecte:"+10 població"},
+{id:"muralla",nom:"🏰 Muralla",cost:40,efecte:"+15 força"},
+{id:"mercat",nom:"🛒 Mercat",cost:35,efecte:"+10 or/torn"},
+{id:"biblioteca",nom:"📚 Biblioteca",cost:30,efecte:"bonus activitats"},
+{id:"castell",nom:"🏰 Castell",cost:60,efecte:"+20 força"},
+{id:"ciutat",nom:"🌆 Ciutat",cost:60,efecte:"+20 població"},
+{id:"banc",nom:"🏦 Banc",cost:50,efecte:"+20 or/torn"},
+{id:"universitat",nom:"🎓 Universitat",cost:50,efecte:"+15 punts"},
+{id:"caserna",nom:"⚔️ Caserna",cost:50,efecte:"+10 força/torn"}
+];
+
+const inicial=[
+{nom:"Regne 1",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
+{nom:"Regne 2",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
+{nom:"Regne 3",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
+{nom:"Regne 4",menjar:20,or:50,forca:10,poblacio:15,edificis:[]},
+{nom:"Regne 5",menjar:20,or:50,forca:10,poblacio:15,edificis:[]}
+];
+
+let regnes=JSON.parse(localStorage.getItem("taulerRegnesEdificis"))||JSON.parse(JSON.stringify(inicial));
+
+function render(){
+let html="";
+regnes.forEach((r,i)=>{
+const total=r.menjar+r.or+r.forca*2+r.poblacio*3;
+html+=`
+<div class="card" id="card${i}">
+<img class="escut" src="${escuts[i]}" onerror="this.style.display='none'">
+<div class="nom" contenteditable="true" oninput="canviarNom(${i},this.innerText)">${r.nom}</div>
+<div class="recursos">
+${inputRecurs(i,"menjar","🌾 Menjar",r.menjar)}
+${inputRecurs(i,"or","💰 Or",r.or)}
+${inputRecurs(i,"forca","🛡️ Força",r.forca)}
+${inputRecurs(i,"poblacio","👥 Població",r.poblacio)}
+</div>
+<div class="edificis">
+<h3>🏗️ Edificis</h3>
+${llistaEdificis(i)}
+<div class="add-box">
+<select id="select${i}">
+${edificisDisponibles.map(e=>`<option value="${e.id}">${e.nom} (${e.cost} or)</option>`).join("")}
+</select>
+<button onclick="afegirEdifici(${i})">+ Afegir</button>
+</div>
+</div>
+<div class="total">Valor total: ${total}</div>
+</div>`;
+});
+document.getElementById("board").innerHTML=html;
+marcarLider(false);
+guardar(false);
+}
+
+function inputRecurs(i,camp,label,valor){
+const risc=valor<5?"risc":"";
+return `<div class="recurs ${risc}"><span>${label}</span><input type="number" value="${valor}" onchange="canviarRecurs(${i},'${camp}',this.value)"></div>`;
+}
+
+function llistaEdificis(i){
+if(!regnes[i].edificis||regnes[i].edificis.length===0)return `<p>Encara no hi ha edificis.</p>`;
+return regnes[i].edificis.map((id,idx)=>{
+const e=edificisDisponibles.find(x=>x.id===id);
+if(!e)return "";
+return `<div class="edifici"><span title="${e.efecte}">${e.nom}</span><button class="remove" onclick="llevarEdifici(${i},${idx})">x</button></div>`;
+}).join("");
+}
+
+function canviarNom(i,valor){
+regnes[i].nom=valor.trim();
+guardar(false);
+}
+
+function canviarRecurs(i,camp,valor){
+regnes[i][camp]=Math.max(0,parseInt(valor)||0);
+render();
+}
+
+function afegirEdifici(i){
+const id=document.getElementById("select"+i).value;
+const edifici=edificisDisponibles.find(e=>e.id===id);
+if(!edifici)return;
+const ok=confirm(`Construir ${edifici.nom}?\nCost: ${edifici.cost} or\nEfecte: ${edifici.efecte}\n\nEs restarà el cost automàticament.`);
+if(!ok)return;
+if(regnes[i].or<edifici.cost){alert("No tens prou or per construir aquest edifici.");return;}
+regnes[i].or-=edifici.cost;
+regnes[i].edificis.push(id);
+aplicarEfecteInstantani(i,id);
+render();
+}
+
+function llevarEdifici(i,idx){
+if(confirm("Vols llevar aquest edifici? No es retornarà el cost.")){
+regnes[i].edificis.splice(idx,1);
+render();
+}
+}
+
+function aplicarEfecteInstantani(i,id){
+if(id==="cases")regnes[i].poblacio+=5;
+if(id==="torre")regnes[i].forca+=5;
+if(id==="vila")regnes[i].poblacio+=10;
+if(id==="muralla")regnes[i].forca+=15;
+if(id==="castell")regnes[i].forca+=20;
+if(id==="ciutat")regnes[i].poblacio+=20;
+if(id==="universitat")regnes[i].or+=15;
+}
+
+function nouTorn(){
+regnes.forEach(r=>{
+r.edificis.forEach(id=>{
+if(id==="granja")r.menjar+=5;
+if(id==="fusta")r.or+=5;
+if(id==="cami")r.or+=5;
+if(id==="moli")r.menjar+=10;
+if(id==="mercat")r.or+=10;
+if(id==="banc")r.or+=20;
+if(id==="caserna")r.forca+=10;
+});
+const consum=Math.ceil(r.poblacio/5)*2;
+r.menjar-=consum;
+if(r.menjar<0){
+r.menjar=0;
+r.poblacio=Math.max(0,r.poblacio-5);
+}
+});
+render();
+alert("Nou torn aplicat: producció dels edificis + consum de menjar.");
+}
+
+function totalRegne(r){return r.menjar+r.or+r.forca*2+r.poblacio*3;}
+
+function marcarLider(mostrar=true){
+document.querySelectorAll(".card").forEach(c=>c.classList.remove("leader"));
+let millor=0;
+regnes.forEach((r,i)=>{if(totalRegne(r)>totalRegne(regnes[millor]))millor=i;});
+const card=document.getElementById("card"+millor);
+if(card)card.classList.add("leader");
+if(mostrar)alert("👑 Líder actual: "+regnes[millor].nom);
+}
+
+function guardar(mostrar=true){
+localStorage.setItem("taulerRegnesEdificis",JSON.stringify(regnes));
+if(mostrar)alert("Dades guardades.");
+}
+
+function reiniciar(){
+if(confirm("Segur que vols reiniciar tot?")){
+localStorage.removeItem("taulerRegnesEdificis");
+regnes=JSON.parse(JSON.stringify(inicial));
+render();
+}
+}
+
+render();
+</script>
+</body>
+</html>
