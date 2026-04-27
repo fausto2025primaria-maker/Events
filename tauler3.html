@@ -1,1 +1,136 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<title>Tauler Regnes</title>
 
+<style>
+body{
+  margin:0;
+  font-family:Georgia;
+  background:#1b120c;
+  color:white;
+  text-align:center;
+}
+
+h1{margin:10px}
+
+.board{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+  padding:10px;
+}
+
+.card{
+  background:#f3dfb5;
+  color:black;
+  border-radius:15px;
+  padding:10px;
+}
+
+img{
+  width:100px;
+  height:120px;
+  object-fit:cover;
+  border:4px solid black;
+  border-radius:10px;
+}
+
+input{
+  width:60px;
+  text-align:center;
+}
+
+button{
+  margin:5px;
+  padding:5px 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🏰 Regnes</h1>
+
+<button onclick="guardar()">💾 Guardar</button>
+<button onclick="reiniciar()">🧹 Reset</button>
+
+<div class="board" id="board"></div>
+
+<script>
+
+// ⚠️ IMPORTANT: posa els noms dels arxius en la mateixa carpeta
+const escuts = [
+"escut1.jpg",
+"escut2.jpg",
+"escut3.jpg",
+"escut4.jpg",
+"escut5.jpg"
+]
+
+// dades inicials
+let regnes = JSON.parse(localStorage.getItem("regnes")) || [
+{nom:"Regne 1", menjar:20, or:50, forca:10, poblacio:15},
+{nom:"Regne 2", menjar:20, or:50, forca:10, poblacio:15},
+{nom:"Regne 3", menjar:20, or:50, forca:10, poblacio:15},
+{nom:"Regne 4", menjar:20, or:50, forca:10, poblacio:15},
+{nom:"Regne 5", menjar:20, or:50, forca:10, poblacio:15}
+]
+
+function render(){
+let html=""
+
+regnes.forEach((r,i)=>{
+html+=`
+<div class="card">
+
+<img src="${escuts[i]}">
+
+<h3 contenteditable oninput="canviarNom(${i}, this.innerText)">
+${r.nom}
+</h3>
+
+🌾 <input type="number" value="${r.menjar}" onchange="canviar(${i},'menjar',this.value)">
+<br>
+
+💰 <input type="number" value="${r.or}" onchange="canviar(${i},'or',this.value)">
+<br>
+
+🛡️ <input type="number" value="${r.forca}" onchange="canviar(${i},'forca',this.value)">
+<br>
+
+👥 <input type="number" value="${r.poblacio}" onchange="canviar(${i},'poblacio',this.value)">
+
+</div>
+`
+})
+
+document.getElementById("board").innerHTML=html
+}
+
+function canviar(i,camp,valor){
+regnes[i][camp]=parseInt(valor)
+guardar()
+}
+
+function canviarNom(i,valor){
+regnes[i].nom=valor
+guardar()
+}
+
+function guardar(){
+localStorage.setItem("regnes", JSON.stringify(regnes))
+}
+
+function reiniciar(){
+localStorage.removeItem("regnes")
+location.reload()
+}
+
+render()
+
+</script>
+
+</body>
+</html>
