@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Masmorres del Regne — Side Quest Medieval</title>
+  <style>
+    :root{
+      --bg:#17120d;
+      --paper:#ead7aa;
+      --paper2:#d6b879;
+      --ink:#2d1b0e;
+      --dark:#21160f;
+      --gold:#d6a23a;
+      --red:#8b2f24;
+      --green:#426c3b;
+      --blue:#344f68;
+      --shadow:rgba(0,0,0,.45);
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color:var(--paper);
+      background:
+        radial-gradient(circle at top, rgba(214,162,58,.20), transparent 35%),
+        linear-gradient(135deg, #25160e, #0f0b08 60%, #2a1b10);
+      overflow-x:hidden;
+    }
+
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size:42px 42px;
+      opacity:.4;
+    }
+
+    .app{
+      max-width:1180px;
+      margin:0 auto;
+      padding:22px;
+    }
+
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:16px;
+      padding:18px 20px;
+      border:3px solid rgba(214,162,58,.75);
+      border-radius:22px;
+      background:linear-gradient(180deg, rgba(43,27,15,.94), rgba(19,12,8,.94));
+      box-shadow:0 14px 34px var(--shadow);
+      margin-bottom:20px;
+    }
+
+    h1,h2,h3,p{margin-top:0}
+
+    h1{
+      margin:0;
+      font-size:clamp(1.5rem, 3vw, 2.6rem);
+      letter-spacing:.5px;
+      color:#f6d98c;
+      text-shadow:0 2px 0 #000;
+    }
+
+    .subtitle{
+      margin:.25rem 0 0;
+      color:#d8c18b;
+      font-size:1rem;
+    }
+
+    .pill{
+      border:1px solid rgba(214,162,58,.65);
+      border-radius:999px;
+      padding:8px 12px;
+      color:#f5dd9c;
+      background:rgba(0,0,0,.24);
+      white-space:nowrap;
+      font-weight:bold;
+    }
+
+    .screen{display:none}
+    .screen.active{display:block}
+
+    .panel{
+      border:3px solid rgba(214,162,58,.8);
+      border-radius:24px;
+      background:
+        linear-gradient(180deg, rgba(255,238,184,.08), rgba(0,0,0,.22)),
+        rgba(31,20,13,.92);
+      box-shadow:0 18px 42px var(--shadow);
+      padding:22px;
+      margin-bottom:20px;
+    }
+
+    .paper{
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 20% 15%, rgba(255,255,255,.28), transparent 28%),
+        linear-gradient(180deg, #f3dfad, #d6b879);
+      border:3px solid #7d5524;
+      box-shadow:inset 0 0 0 3px rgba(255,255,255,.18), 0 16px 35px var(--shadow);
+    }
+
+    .hero-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+      gap:16px;
+    }
+
+    .card{
+      border:2px solid rgba(214,162,58,.82);
+      border-radius:20px;
+      overflow:hidden;
+      background:linear-gradient(180deg, #332114, #17100b);
+      box-shadow:0 10px 24px rgba(0,0,0,.35);
+      cursor:pointer;
+      transition:.18s transform, .18s box-shadow, .18s border-color;
+    }
+
+    .card:hover{
+      transform:translateY(-4px);
+      box-shadow:0 16px 34px rgba(0,0,0,.55);
+      border-color:#ffe09a;
+    }
+
+    .portrait{
+      height:178px;
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(circle at center, rgba(214,162,58,.35), transparent 48%),
+        linear-gradient(135deg, #4b2c18, #15100c);
+      color:#f8df9b;
+      font-size:4rem;
+      border-bottom:2px solid rgba(214,162,58,.65);
+      text-align:center;
+      padding:10px;
+    }
+
+    .card-body{padding:14px}
+    .card h3{margin:0 0 4px; color:#ffe19a; font-size:1.25rem}
+    .card .role{color:#ccb072; margin-bottom:10px; font-style:italic}
+    .stats{display:flex; flex-wrap:wrap; gap:8px}
+    .stat{
+      background:rgba(0,0,0,.30);
+      border:1px solid rgba(255,226,154,.35);
+      color:#f8e7b3;
+      padding:6px 8px;
+      border-radius:12px;
+      font-weight:bold;
+    }
+
+    .btn-row{display:flex; gap:12px; flex-wrap:wrap; align-items:center}
+
+    button{
+      border:2px solid #7d5524;
+      border-radius:16px;
+      padding:12px 16px;
+      font-family:Georgia, "Times New Roman", serif;
+      font-weight:bold;
+      font-size:1rem;
+      color:#25160b;
+      background:linear-gradient(180deg, #ffe39d, #c99433);
+      cursor:pointer;
+      box-shadow:0 6px 0 #5a3414, 0 10px 20px rgba(0,0,0,.35);
+      transition:.12s transform, .12s box-shadow, .12s filter;
+    }
+
+    button:hover{filter:brightness(1.05)}
+    button:active{transform:translateY(4px); box-shadow:0 2px 0 #5a3414}
+    button.secondary{
+      color:#f6dfad;
+      background:linear-gradient(180deg, #59402b, #2b1b11);
+      border-color:#c79a46;
+    }
+    button.danger{
+      color:#ffe8d6;
+      background:linear-gradient(180deg, #9b3d2c, #572018);
+    }
+    button:disabled{opacity:.45; cursor:not-allowed; filter:grayscale(.7)}
+
+    .mission-title{
+      color:#ffe19a;
+      font-size:clamp(1.5rem, 3vw, 2.4rem);
+      margin-bottom:8px;
+    }
+
+    .two-col{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
+    }
+
+    @media(max-width:760px){
+      header{flex-direction:column; align-items:flex-start}
+      .two-col{grid-template-columns:1fr}
+      .portrait{height:150px}
+    }
+
+    .question-options{
+      display:grid;
+      gap:10px;
+      margin:14px 0;
+    }
+
+    .option{
+      width:100%;
+      text-align:left;
+      background:linear-gradient(180deg, #fff0bd, #d5ad58);
+    }
+
+    .combat-zone{
+      display:grid;
+      grid-template-columns:1fr auto 1fr;
+      align-items:stretch;
+      gap:18px;
+    }
+
+    @media(max-width:860px){
+      .combat-zone{grid-template-columns:1fr}
+    }
+
+    .fighter{
+      min-height:360px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+
+    .fighter .portrait{
+      height:220px;
+      border-radius:16px;
+      border:2px solid rgba(214,162,58,.72);
+      margin-bottom:14px;
+    }
+
+    .vs{
+      display:grid;
+      place-items:center;
+      color:#ffe19a;
+      font-size:2rem;
+      font-weight:bold;
+      text-shadow:0 2px 0 #000;
+    }
+
+    .bar-wrap{
+      background:#1b100a;
+      border:2px solid #7d5524;
+      border-radius:999px;
+      overflow:hidden;
+      height:18px;
+      margin:8px 0;
+    }
+    .bar{
+      height:100%;
+      background:linear-gradient(90deg, #7e221e, #d84b35, #ffba68);
+      width:100%;
+      transition:.25s width;
+    }
+
+    .log{
+      max-height:210px;
+      overflow:auto;
+      padding:14px;
+      border-radius:18px;
+      background:rgba(0,0,0,.32);
+      border:1px solid rgba(214,162,58,.5);
+      line-height:1.45;
+    }
+
+    .log p{
+      margin:.35rem 0;
+      color:#f3dfad;
+    }
+
+    .rewards{
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));
+      gap:14px;
+    }
+
+    .reward-card{
+      padding:16px;
+      border-radius:18px;
+      background:rgba(0,0,0,.28);
+      border:1px solid rgba(214,162,58,.55);
+    }
+
+    .small{font-size:.95rem;color:#d8c18b}
+    .highlight{color:#ffe19a;font-weight:bold}
+    .ok{color:#a9e68e;font-weight:bold}
+    .bad{color:#ffb0a5;font-weight:bold}
+
+    .event-box{
+      font-size:1.15rem;
+      line-height:1.45;
+    }
+
+    .top-actions{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom:14px;
+    }
+
+    .tag{
+      display:inline-block;
+      margin:3px 4px 3px 0;
+      padding:5px 9px;
+      border-radius:999px;
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(214,162,58,.45);
+      color:#ffe19a;
+      font-weight:bold;
+    }
+
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>🏰 Masmorres del Regne</h1>
+      <p class="subtitle">Side quests històriques per guanyar recursos, objectes i prestigi per al teu regne.</p>
+    </div>
+    <div class="pill" id="phasePill">Inici</div>
+  </header>
+
+  <!-- INICI -->
+  <section id="screenStart" class="screen active">
+    <div class="panel paper">
+      <h2>Benvinguts a les missions d’aventura</h2>
+      <p>
+        Cada regne pot enviar un heroi històric a una missió perillosa. Si supera els combats,
+        tornarà amb subministraments que després podreu transformar en <b>menjar, or, força o població</b>.
+      </p>
+      <p>
+        Abans de jugar, triareu un personatge important de la història medieval valenciana o ibèrica.
+        Llegir la seua fitxa i encertar la pregunta dona un bonus inicial.
+      </p>
+      <div class="btn-row">
+        <button onclick="startMission()">🎲 Generar missió aleatòria</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MISSIO -->
+  <section id="screenMission" class="screen">
+    <div class="panel">
+      <div class="top-actions">
+        <div>
+          <div class="small">Missió generada</div>
+          <h2 class="mission-title" id="missionName"></h2>
+        </div>
+        <button class="secondary" onclick="startMission()">🎲 Nova missió</button>
+      </div>
+      <p id="missionDesc"></p>
+      <p>
+        <span class="tag" id="missionPlace"></span>
+        <span class="tag" id="missionDifficulty"></span>
+      </p>
+      <div class="btn-row">
+        <button onclick="showHeroSelect()">🧙 Triar heroi</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SELECTOR HEROI -->
+  <section id="screenHeroes" class="screen">
+    <div class="panel">
+      <h2>Tria un heroi per a la missió</h2>
+      <p class="small">Cada heroi té vida, atac, defensa, habilitat i una pregunta didàctica amb bonus.</p>
+      <div class="hero-grid" id="heroGrid"></div>
+    </div>
+  </section>
+
+  <!-- FITXA HEROI -->
+  <section id="screenHeroDetail" class="screen">
+    <div class="panel paper">
+      <div class="two-col">
+        <div>
+          <div class="portrait" id="detailPortrait"></div>
+          <h2 id="detailName"></h2>
+          <p><b id="detailTitle"></b></p>
+          <p>
+            <span class="tag" id="detailLife"></span>
+            <span class="tag" id="detailAttack"></span>
+            <span class="tag" id="detailDefense"></span>
+          </p>
+          <p><b>✨ Habilitat:</b> <span id="detailSkill"></span></p>
+          <p id="detailSkillEffect"></p>
+        </div>
+        <div>
+          <h3>📜 Qui era?</h3>
+          <p id="detailText"></p>
+          <h3>💡 Sabies que...?</h3>
+          <p id="detailFact"></p>
+          <h3>❓ Pregunta ràpida</h3>
+          <p id="questionText"></p>
+          <div class="question-options" id="questionOptions"></div>
+          <div class="btn-row">
+            <button class="secondary" onclick="skipQuestion()">⏩ Passar ràpid</button>
+            <button class="danger" onclick="showHeroSelect()">Canviar heroi</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EVENT -->
+  <section id="screenEvent" class="screen">
+    <div class="panel paper">
+      <h2>📜 Esdeveniment de la missió</h2>
+      <div class="event-box" id="eventText"></div>
+      <p class="small" id="eventEffectText"></p>
+      <div class="btn-row">
+        <button onclick="continueAfterEvent()">Continuar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMBAT -->
+  <section id="screenCombat" class="screen">
+    <div class="panel">
+      <h2 id="combatTitle">Combat</h2>
+      <div class="combat-zone">
+        <div class="fighter">
+          <div>
+            <div class="portrait" id="combatHeroPortrait"></div>
+            <h3 id="combatHeroName"></h3>
+            <div class="bar-wrap"><div class="bar" id="heroHpBar"></div></div>
+            <p id="heroStats"></p>
+          </div>
+          <div class="btn-row">
+            <button onclick="playerAttack()">⚔️ Atacar</button>
+            <button onclick="playerDefend()">🛡️ Defensar</button>
+            <button id="potionBtn" onclick="usePotion()">🧪 Curar</button>
+            <button id="skillBtn" onclick="useSkill()">✨ Habilitat</button>
+          </div>
+        </div>
+
+        <div class="vs">VS</div>
+
+        <div class="fighter">
+          <div>
+            <div class="portrait" id="enemyPortrait">⚔️</div>
+            <h3 id="enemyName"></h3>
+            <div class="bar-wrap"><div class="bar" id="enemyHpBar"></div></div>
+            <p id="enemyStats"></p>
+          </div>
+          <div class="log" id="combatLog"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTAT -->
+  <section id="screenResult" class="screen">
+    <div class="panel paper">
+      <h2 id="resultTitle"></h2>
+      <p id="resultText"></p>
+      <h3>🎁 Recompenses aconseguides</h3>
+      <div class="rewards" id="rewardList"></div>
+      <h3>🔁 Conversió al tauler del regne</h3>
+      <p class="small">
+        De moment la conversió és manual: el grup decideix i ho apunteu al tauler.
+        En la següent versió podem connectar-ho amb el teu tauler de regnes.
+      </p>
+      <div id="conversionList"></div>
+      <div class="btn-row" style="margin-top:18px;">
+        <button onclick="resetGame()">🏰 Nova side quest</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =========================================================
+   DADES BASE — AMPLIABLES
+========================================================= */
+
+const HEROIS = [
+  {
+    id:"jaume1",
+    emoji:"👑",
+    nom:"Jaume I",
+    titol:"El Conqueridor",
+    img:"img/jaume1.jpg",
+    vida:12,
+    atac:4,
+    defensa:3,
+    habilitat:"Crida del Rei",
+    efecte:"Una vegada per missió, suma +2 al teu atac.",
+    text:"Jaume I va ser un rei molt important de la Corona d’Aragó. L’any 1238 va conquistar la ciutat de València i va impulsar la creació d’un nou regne amb lleis pròpies. La seua figura és clau per entendre la València medieval cristiana. Va dirigir campanyes militars, va pactar amb nobles i va organitzar el territori després de la conquesta.",
+    curiositat:"Va deixar escrita una crònica coneguda com el Llibre dels fets.",
+    pregunta:"En quin any va conquistar València Jaume I?",
+    opcions:["711","1238","1492"],
+    correcta:1,
+    bonus:"Comença el primer combat amb +1 atac."
+  },
+  {
+    id:"ibnalabbar",
+    emoji:"📜",
+    nom:"Ibn al-Abbar",
+    titol:"El Savi Exiliat",
+    img:"img/ibnalabbar.jpg",
+    vida:10,
+    atac:3,
+    defensa:2,
+    habilitat:"Coneixement Antic",
+    efecte:"Una vegada per missió, redueix en 2 el dany rebut.",
+    text:"Ibn al-Abbar va ser un intel·lectual andalusí nascut a València. Va viure en una època de grans canvis, quan la ciutat passava del món islàmic al cristià. Va escriure obres literàries i històriques i és recordat com un savi que va intentar conservar la memòria del seu temps. La seua vida mostra la riquesa cultural de la València medieval.",
+    curiositat:"Va escriure sobre savis, poetes i personatges importants del seu món.",
+    pregunta:"Ibn al-Abbar va destacar sobretot com a...",
+    opcions:["savi i escriptor","pirata","ferrer"],
+    correcta:0,
+    bonus:"Comença amb +1 defensa en el primer combat."
+  },
+  {
+    id:"ausiasmarch",
+    emoji:"✍️",
+    nom:"Ausiàs March",
+    titol:"La Paraula Ferida",
+    img:"img/ausiasmarch.jpg",
+    vida:11,
+    atac:2,
+    defensa:3,
+    habilitat:"Versos d’Ànima",
+    efecte:"Una vegada per missió, recupera 3 punts de vida.",
+    text:"Ausiàs March va ser un dels grans poetes de la literatura valenciana. Va viure en el segle XV i va escriure sobre l’amor, la mort, el dubte i els sentiments humans amb molta profunditat. També va ser cavaller, cosa que ens recorda que en l’edat mitjana una mateixa persona podia participar en la guerra i en la cultura.",
+    curiositat:"Abans de ser recordat com a poeta, també va tindre vida de cavaller.",
+    pregunta:"Ausiàs March és recordat principalment com a...",
+    opcions:["poeta","rei","constructor de castells"],
+    correcta:0,
+    bonus:"Comença amb +1 vida."
+  },
+  {
+    id:"alazraq",
+    emoji:"🏹",
+    nom:"Al-Azraq",
+    titol:"El Senyor de la Muntanya",
+    img:"img/alazraq.jpg",
+    vida:10,
+    atac:4,
+    defensa:2,
+    habilitat:"Emboscada",
+    efecte:"Una vegada per missió, fa un atac doble.",
+    text:"Al-Azraq va ser un cabdill musulmà que va resistir l’avanç cristià en terres valencianes, especialment en zones muntanyoses del sud. Coneixia molt bé el territori i va organitzar revoltes contra el poder de Jaume I. La seua història ajuda a entendre que la conquesta no va ser un procés senzill ni immediat.",
+    curiositat:"El seu nom significa aproximadament 'el dels ulls blaus'.",
+    pregunta:"Al-Azraq va resistir sobretot en zones...",
+    opcions:["de muntanya","de mar obert","del desert llunyà"],
+    correcta:0,
+    bonus:"El primer atac suma +2."
+  },
+  {
+    id:"violant",
+    emoji:"👑",
+    nom:"Violant d’Hongria",
+    titol:"La Reina Estratègica",
+    img:"img/violant.jpg",
+    vida:11,
+    atac:3,
+    defensa:3,
+    habilitat:"Estratègia Reial",
+    efecte:"Una vegada per missió, repeteix una tirada dolenta.",
+    text:"Violant d’Hongria va ser reina d’Aragó i esposa de Jaume I. En una època en què moltes dones quedaven amagades als relats oficials, ella va tindre un paper polític important. Va influir en decisions, aliances i en la vida de la cort. La seua figura permet parlar del poder, la diplomàcia i el paper de les dones medievals.",
+    curiositat:"Va ser mare de reis i va influir en el futur polític de la Corona d’Aragó.",
+    pregunta:"Violant d’Hongria va ser...",
+    opcions:["reina","pirata","monja guerrera"],
+    correcta:0,
+    bonus:"Comença amb una repetició de tirada disponible."
+  },
+  {
+    id:"eiximenis",
+    emoji:"⚖️",
+    nom:"Francesc Eiximenis",
+    titol:"El Conseller del Poble",
+    img:"img/eiximenis.jpg",
+    vida:11,
+    atac:2,
+    defensa:4,
+    habilitat:"Consell Savi",
+    efecte:"Una vegada per missió, evita completament un atac enemic.",
+    text:"Francesc Eiximenis va ser un frare i escriptor molt influent en la Corona d’Aragó. Va escriure obres pensades per orientar la societat, els governants i la vida quotidiana. Els seus textos ens ajuden a entendre com pensava la gent de l’edat mitjana sobre la ciutat, la moral, el poder i la convivència.",
+    curiositat:"Va escriure molt sobre com havia de funcionar una bona societat.",
+    pregunta:"Francesc Eiximenis era...",
+    opcions:["frare i escriptor","capità pirata","rei de València"],
+    correcta:0,
+    bonus:"Comença amb +1 defensa."
+  }
+];
+
+const MISSIONS = [
+  { id:"m1", nom:"El camí tallat", lloc:"camí de muntanya", descripcio:"Els mercaders han deixat de passar per un antic camí. Alguna cosa espanta els viatgers i el regne podria quedar-se sense subministraments.", dificultat:1 },
+  { id:"m2", nom:"La torre abandonada", lloc:"torre de vigilància", descripcio:"Una torre que vigilava els camps sembla buida, però de nit hi ha llum a les finestres. Els camperols demanen ajuda abans que la por s’escampe.", dificultat:1 },
+  { id:"m3", nom:"El carro perdut", lloc:"camí comercial", descripcio:"Un carro carregat de sacs, eines i monedes ha desaparegut entre dos pobles. Les rodes han deixat marques cap a una zona poc segura.", dificultat:1 },
+  { id:"m4", nom:"Bandolers al pont", lloc:"pont sobre el riu", descripcio:"Un pont clau per al comerç està controlat per bandolers. Qui vulga creuar ha de pagar, fugir o lluitar.", dificultat:2 },
+  { id:"m5", nom:"La senda dels llops", lloc:"muntanya", descripcio:"Els ramats han patit atacs i els pastors no s’atreveixen a pujar a la serra. El regne necessita protegir els animals.", dificultat:2 },
+  { id:"m6", nom:"La cripta del monestir", lloc:"monestir antic", descripcio:"Sota un monestir hi ha passadissos abandonats que podrien amagar documents, queviures o ferramentes. Però algú ja ha entrat abans.", dificultat:2 },
+  { id:"m7", nom:"Els contrabandistes", lloc:"camins ocults", descripcio:"Algú mou mercaderies sense pagar impostos ni respectar els pactes del regne. Seguir la pista pot portar a un magatzem secret.", dificultat:3 },
+  { id:"m8", nom:"El port silenciós", lloc:"costa", descripcio:"Cap vaixell entra ni ix del port. Les barques estan amarrades i els pescadors parlen d’homes armats entre les roques.", dificultat:3 },
+  { id:"m9", nom:"El castell oblidat", lloc:"ruïnes", descripcio:"Un antic castell torna a tindre activitat. Fum, passos i cavalls indiquen que algú l’ha ocupat.", dificultat:3 },
+  { id:"m10", nom:"El senyor rebel", lloc:"fortalesa", descripcio:"Un noble local ha deixat d’obeir el regne i acumula armes i homes. La missió pot evitar un conflicte major.", dificultat:4 }
+];
+
+const ENEMICS = [
+  { nom:"Rata de graner", nivell:1, vida:5, atac:1, emoji:"🐀" },
+  { nom:"Gos salvatge", nivell:1, vida:6, atac:2, emoji:"🐕" },
+  { nom:"Lladre novell", nivell:1, vida:6, atac:2, emoji:"🗡️" },
+  { nom:"Guaita espantat", nivell:1, vida:7, atac:2, emoji:"🛡️" },
+
+  { nom:"Bandoler", nivell:2, vida:8, atac:3, emoji:"🗡️" },
+  { nom:"Llop famolenc", nivell:2, vida:9, atac:3, emoji:"🐺" },
+  { nom:"Soldat desertor", nivell:2, vida:10, atac:3, emoji:"⚔️" },
+  { nom:"Contrabandista", nivell:2, vida:9, atac:4, emoji:"💰" },
+
+  { nom:"Cap de bandolers", nivell:3, vida:12, atac:4, emoji:"🏹" },
+  { nom:"Cavaller sense senyor", nivell:3, vida:13, atac:4, emoji:"🐴" },
+  { nom:"Guàrdia corrupte", nivell:3, vida:12, atac:5, emoji:"🛡️" },
+  { nom:"Pirata de costa", nivell:3, vida:13, atac:5, emoji:"☠️" },
+
+  { nom:"Capità de bandolers", nivell:4, vida:15, atac:5, emoji:"⚔️" },
+  { nom:"Senyor rebel", nivell:4, vida:16, atac:6, emoji:"🏰" },
+  { nom:"Capità corsari", nivell:4, vida:15, atac:6, emoji:"🚢" },
+  { nom:"Mercenari blindat", nivell:4, vida:17, atac:5, emoji:"🛡️" }
+];
+
+const ESDEVENIMENTS = [
+  { nom:"Cofre tancat", text:"Trobeu un cofre vell mig amagat sota una manta. Obrir-lo costa temps, però dins hi ha alguna cosa útil.", efecte:"bonusRecompensa" },
+  { nom:"Pont trencat", text:"El pas està trencat. El grup ha de rodejar per una senda difícil i arriba més cansat.", efecte:"danyHeroi" },
+  { nom:"Carro abandonat", text:"Un carro sense amo encara conserva sacs, cordes i alguna ferramenta rovellada.", efecte:"bonusRecompensa" },
+  { nom:"Mercader ferit", text:"Un mercader ferit demana ajuda. Si el socorreu, vos indica un camí més segur.", efecte:"cura" },
+  { nom:"Pluja intensa", text:"La pluja converteix el camí en fang. Les botes pesen i l’avanç es fa lent.", efecte:"penalAtac" },
+  { nom:"Mapa antic", text:"En una bossa de cuir apareix un mapa amb marques estranyes. Potser indica un lloc amb recursos.", efecte:"bonusRecompensa" },
+  { nom:"Trampa de corda", text:"Una corda amagada en terra s’activa de sobte. L’heroi cau i perd temps recuperant-se.", efecte:"danyHeroi" },
+  { nom:"Camperols amagats", text:"Uns camperols s’amaguen de la violència. Si els ajudeu, podran tornar al regne.", efecte:"refugiats" }
+];
+
+const RECOMPENSES = [
+  { nom:"Queviures", quantitat:2, converteix:["menjar"] },
+  { nom:"Ferramentes", quantitat:2, converteix:["força","or"] },
+  { nom:"Monedes", quantitat:2, converteix:["or"] },
+  { nom:"Animals", quantitat:1, converteix:["menjar","població"] },
+  { nom:"Materials", quantitat:2, converteix:["força","or"] },
+  { nom:"Refugiats", quantitat:1, converteix:["població"] },
+  { nom:"Medicines", quantitat:1, converteix:["població"] }
+];
+
+/* =========================================================
+   ESTAT DEL JOC
+========================================================= */
+
+let state = {
+  missio:null,
+  heroi:null,
+  enemy:null,
+  combats:[],
+  stageIndex:0,
+  potionUsed:false,
+  skillUsed:false,
+  defending:false,
+  firstAttackBonus:0,
+  defenseBonus:0,
+  rerollAvailable:false,
+  extraRewards:0,
+  finalRewards:[]
+};
+
+/* =========================================================
+   UTILITATS
+========================================================= */
+
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function d6(){ return Math.floor(Math.random()*6)+1; }
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+function setPhase(txt){
+  document.getElementById("phasePill").textContent = txt;
+}
+
+function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+function imgOrEmoji(item){
+  return `<img src="${item.img}" alt="${item.nom}" onerror="this.remove(); this.parentElement.textContent='${item.emoji || "🧙"}';" style="width:100%;height:100%;object-fit:cover;">`;
+}
+
+function log(msg, cls=""){
+  const box = document.getElementById("combatLog");
+  const p = document.createElement("p");
+  p.className = cls;
+  p.innerHTML = msg;
+  box.prepend(p);
+}
+
+/* =========================================================
+   FLUX PRINCIPAL
+========================================================= */
+
+function startMission(){
+  state = {
+    missio: clone(rand(MISSIONS)),
+    heroi:null,
+    enemy:null,
+    combats:[],
+    stageIndex:0,
+    potionUsed:false,
+    skillUsed:false,
+    defending:false,
+    firstAttackBonus:0,
+    defenseBonus:0,
+    rerollAvailable:false,
+    extraRewards:0,
+    finalRewards:[]
+  };
+
+  document.getElementById("missionName").textContent = state.missio.nom;
+  document.getElementById("missionDesc").textContent = state.missio.descripcio;
+  document.getElementById("missionPlace").textContent = "📍 " + state.missio.lloc;
+  document.getElementById("missionDifficulty").textContent = "⭐ Dificultat " + state.missio.dificultat;
+
+  state.combats = generarCombats(state.missio.dificultat);
+
+  setPhase("Missió");
+  showScreen("screenMission");
+}
+
+function showHeroSelect(){
+  renderHeroes();
+  setPhase("Tria d’heroi");
+  showScreen("screenHeroes");
+}
+
+function renderHeroes(){
+  const grid = document.getElementById("heroGrid");
+  grid.innerHTML = "";
+  HEROIS.forEach(h => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.onclick = () => selectHero(h.id);
+    card.innerHTML = `
+      <div class="portrait">${imgOrEmoji(h)}</div>
+      <div class="card-body">
+        <h3>${h.nom}</h3>
+        <div class="role">${h.titol}</div>
+        <div class="stats">
+          <span class="stat">❤️ ${h.vida}</span>
+          <span class="stat">⚔️ ${h.atac}</span>
+          <span class="stat">🛡️ ${h.defensa}</span>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function selectHero(id){
+  const h = clone(HEROIS.find(x => x.id === id));
+  state.heroi = {
+    ...h,
+    maxVida:h.vida,
+    currentVida:h.vida
+  };
+
+  document.getElementById("detailPortrait").innerHTML = imgOrEmoji(h);
+  document.getElementById("detailName").textContent = h.nom;
+  document.getElementById("detailTitle").textContent = h.titol;
+  document.getElementById("detailLife").textContent = "❤️ Vida " + h.vida;
+  document.getElementById("detailAttack").textContent = "⚔️ Atac " + h.atac;
+  document.getElementById("detailDefense").textContent = "🛡️ Defensa " + h.defensa;
+  document.getElementById("detailSkill").textContent = h.habilitat;
+  document.getElementById("detailSkillEffect").textContent = h.efecte;
+  document.getElementById("detailText").textContent = h.text;
+  document.getElementById("detailFact").textContent = h.curiositat;
+  document.getElementById("questionText").textContent = h.pregunta;
+
+  const q = document.getElementById("questionOptions");
+  q.innerHTML = "";
+  h.opcions.forEach((op, i) => {
+    const b = document.createElement("button");
+    b.className = "option";
+    b.textContent = String.fromCharCode(65+i) + ") " + op;
+    b.onclick = () => answerQuestion(i);
+    q.appendChild(b);
+  });
+
+  setPhase("Fitxa històrica");
+  showScreen("screenHeroDetail");
+}
+
+function answerQuestion(i){
+  const h = state.heroi;
+  if(i === h.correcta){
+    applyHeroBonus(h);
+    alert("✅ Correcte! Bonus activat: " + h.bonus);
+  }else{
+    alert("❌ No passa res. Jugueu sense bonus.");
+  }
+  beginAdventure();
+}
+
+function skipQuestion(){
+  alert("⏩ Passeu ràpid. Sense bonus inicial.");
+  beginAdventure();
+}
+
+function applyHeroBonus(h){
+  if(h.id === "jaume1") state.firstAttackBonus += 1;
+  if(h.id === "ibnalabbar") state.defenseBonus += 1;
+  if(h.id === "ausiasmarch") {
+    state.heroi.maxVida += 1;
+    state.heroi.currentVida += 1;
+  }
+  if(h.id === "alazraq") state.firstAttackBonus += 2;
+  if(h.id === "violant") state.rerollAvailable = true;
+  if(h.id === "eiximenis") state.defenseBonus += 1;
+}
+
+function beginAdventure(){
+  state.stageIndex = 0;
+  state.potionUsed = false;
+  state.skillUsed = false;
+  state.extraRewards = 0;
+  nextStage();
+}
+
+function nextStage(){
+  // Seqüència: combat 0, event, combat 1, event, combat 2, boss
+  if(state.stageIndex === 0) return startCombat(state.combats[0], "Combat 1");
+  if(state.stageIndex === 1) return showEvent();
+  if(state.stageIndex === 2) return startCombat(state.combats[1], "Combat 2");
+  if(state.stageIndex === 3) return showEvent();
+  if(state.stageIndex === 4) return startCombat(state.combats[2], "Combat 3");
+  if(state.stageIndex === 5) return startCombat(state.combats[3], "Cap final");
+  return finishMission(true);
+}
+
+/* =========================================================
+   GENERACIÓ
+========================================================= */
+
+function generarCombats(dificultat){
+  const n1 = Math.max(1, dificultat);
+  const n2 = Math.min(4, dificultat);
+  const n3 = Math.min(4, dificultat + 1);
+  const boss = Math.min(4, dificultat + 1);
+  return [
+    clone(enemicPerNivell(n1)),
+    clone(enemicPerNivell(n2)),
+    clone(enemicPerNivell(n3)),
+    clone(enemicPerNivell(boss))
+  ].map(e => ({...e, maxVida:e.vida, currentVida:e.vida}));
+}
+
+function enemicPerNivell(nivell){
+  const candidates = ENEMICS.filter(e => e.nivell === nivell);
+  return rand(candidates.length ? candidates : ENEMICS);
+}
+
+/* =========================================================
+   ESDEVENIMENTS
+========================================================= */
+
+function showEvent(){
+  const ev = rand(ESDEVENIMENTS);
+  let effectText = "";
+
+  if(ev.efecte === "bonusRecompensa"){
+    state.extraRewards += 1;
+    effectText = "Efecte: +1 recompensa al final de la missió.";
+  }
+  if(ev.efecte === "danyHeroi"){
+    state.heroi.currentVida = Math.max(1, state.heroi.currentVida - 1);
+    effectText = "Efecte: l’heroi perd 1 punt de vida.";
+  }
+  if(ev.efecte === "cura"){
+    state.heroi.currentVida = Math.min(state.heroi.maxVida, state.heroi.currentVida + 2);
+    effectText = "Efecte: l’heroi recupera 2 punts de vida.";
+  }
+  if(ev.efecte === "penalAtac"){
+    state.firstAttackBonus -= 1;
+    effectText = "Efecte: el pròxim atac té -1.";
+  }
+  if(ev.efecte === "refugiats"){
+    state.extraRewards += 1;
+    effectText = "Efecte: +1 recompensa i possible població al final.";
+  }
+
+  document.getElementById("eventText").innerHTML = `<b>${ev.nom}</b><br>${ev.text}`;
+  document.getElementById("eventEffectText").textContent = effectText;
+
+  setPhase("Esdeveniment");
+  showScreen("screenEvent");
+}
+
+function continueAfterEvent(){
+  state.stageIndex++;
+  nextStage();
+}
+
+/* =========================================================
+   COMBAT
+========================================================= */
+
+function startCombat(enemy, title){
+  state.enemy = enemy;
+  state.defending = false;
+
+  document.getElementById("combatTitle").textContent = title;
+  document.getElementById("combatHeroPortrait").innerHTML = imgOrEmoji(state.heroi);
+  document.getElementById("combatHeroName").textContent = state.heroi.nom;
+  document.getElementById("enemyPortrait").textContent = enemy.emoji || "⚔️";
+  document.getElementById("enemyName").textContent = enemy.nom;
+  document.getElementById("combatLog").innerHTML = "";
+  log(`Comença el combat contra <b>${enemy.nom}</b>.`);
+
+  updateCombatUI();
+  setPhase(title);
+  showScreen("screenCombat");
+}
+
+function updateCombatUI(){
+  const h = state.heroi;
+  const e = state.enemy;
+
+  document.getElementById("heroStats").innerHTML =
+    `❤️ ${h.currentVida}/${h.maxVida} · ⚔️ ${h.atac} · 🛡️ ${h.defensa}`;
+  document.getElementById("enemyStats").innerHTML =
+    `❤️ ${e.currentVida}/${e.maxVida} · ⚔️ ${e.atac} · Nivell ${e.nivell}`;
+
+  document.getElementById("heroHpBar").style.width =
+    Math.max(0, (h.currentVida / h.maxVida) * 100) + "%";
+  document.getElementById("enemyHpBar").style.width =
+    Math.max(0, (e.currentVida / e.maxVida) * 100) + "%";
+
+  document.getElementById("potionBtn").disabled = state.potionUsed;
+  document.getElementById("skillBtn").disabled = state.skillUsed;
+}
+
+function playerAttack(){
+  let roll = d6();
+  let bonus = state.firstAttackBonus;
+  state.firstAttackBonus = 0;
+
+  let damage = Math.max(1, state.heroi.atac + roll + bonus - 3);
+  state.enemy.currentVida -= damage;
+
+  log(`🎲 Has tret ${roll}. ${state.heroi.nom} fa <b>${damage}</b> de dany.${bonus ? " Bonus aplicat!" : ""}`, "ok");
+
+  if(state.enemy.currentVida <= 0) return winCombat();
+
+  enemyTurn();
+}
+
+function playerDefend(){
+  state.defending = true;
+  log(`🛡️ ${state.heroi.nom} es defensa. El pròxim dany rebut es reduirà.`);
+  enemyTurn();
+}
+
+function usePotion(){
+  if(state.potionUsed) return;
+  state.potionUsed = true;
+  const heal = 4;
+  state.heroi.currentVida = Math.min(state.heroi.maxVida, state.heroi.currentVida + heal);
+  log(`🧪 Poció usada. Recuperes ${heal} punts de vida.`, "ok");
+  updateCombatUI();
+  enemyTurn();
+}
+
+function useSkill(){
+  if(state.skillUsed) return;
+  state.skillUsed = true;
+  const id = state.heroi.id;
+
+  if(id === "jaume1"){
+    const damage = state.heroi.atac + 2;
+    state.enemy.currentVida -= damage;
+    log(`👑 Crida del Rei! Fas ${damage} de dany directe.`, "ok");
+    if(state.enemy.currentVida <= 0) return winCombat();
+    enemyTurn();
+  }
+  else if(id === "ibnalabbar"){
+    state.defenseBonus += 2;
+    log(`📜 Coneixement Antic! Els pròxims danys es reduiran.`, "ok");
+    enemyTurn();
+  }
+  else if(id === "ausiasmarch"){
+    state.heroi.currentVida = Math.min(state.heroi.maxVida, state.heroi.currentVida + 3);
+    log(`✍️ Versos d’Ànima! Recuperes 3 punts de vida.`, "ok");
+    updateCombatUI();
+    enemyTurn();
+  }
+  else if(id === "alazraq"){
+    let d1 = Math.max(1, state.heroi.atac + d6() - 3);
+    let d2 = Math.max(1, state.heroi.atac + d6() - 3);
+    state.enemy.currentVida -= (d1 + d2);
+    log(`🏹 Emboscada! Dos colps: ${d1} + ${d2} de dany.`, "ok");
+    if(state.enemy.currentVida <= 0) return winCombat();
+    enemyTurn();
+  }
+  else if(id === "violant"){
+    state.rerollAvailable = true;
+    log(`👑 Estratègia Reial! Guardes una repetició de tirada.`, "ok");
+    enemyTurn();
+  }
+  else if(id === "eiximenis"){
+    state.defenseBonus += 99;
+    log(`⚖️ Consell Savi! Evitaràs quasi tot el pròxim atac.`, "ok");
+    enemyTurn();
+  }
+  else{
+    log(`✨ Habilitat activada.`);
+    enemyTurn();
+  }
+}
+
+function enemyTurn(){
+  if(state.enemy.currentVida <= 0) return winCombat();
+
+  let roll = d6();
+  let raw = Math.max(1, state.enemy.atac + roll - state.heroi.defensa);
+  let reduction = 0;
+
+  if(state.defending) reduction += 2;
+  if(state.defenseBonus > 0){
+    reduction += state.defenseBonus;
+    state.defenseBonus = 0;
+  }
+
+  let damage = Math.max(0, raw - reduction);
+  state.heroi.currentVida -= damage;
+
+  log(`⚔️ ${state.enemy.nom} trau ${roll} i causa <b>${damage}</b> de dany.${reduction ? " Defensa aplicada." : ""}`, damage ? "bad" : "ok");
+
+  state.defending = false;
+
+  if(state.heroi.currentVida <= 0) return finishMission(false);
+
+  updateCombatUI();
+}
+
+function winCombat(){
+  log(`✅ Has derrotat ${state.enemy.nom}!`, "ok");
+  updateCombatUI();
+
+  setTimeout(() => {
+    state.stageIndex++;
+    nextStage();
+  }, 700);
+}
+
+/* =========================================================
+   RESULTAT
+========================================================= */
+
+function finishMission(victory){
+  setPhase("Resultat");
+
+  if(victory){
+    const base = 2 + state.missio.dificultat + state.extraRewards;
+    state.finalRewards = [];
+    for(let i=0;i<base;i++){
+      state.finalRewards.push(clone(rand(RECOMPENSES)));
+    }
+    document.getElementById("resultTitle").textContent = "🏆 Victòria!";
+    document.getElementById("resultText").innerHTML =
+      `El teu heroi ha completat <b>${state.missio.nom}</b>. El regne rep subministraments i prestigi.`;
+  }else{
+    const partial = Math.max(1, state.missio.dificultat - 1 + state.extraRewards);
+    state.finalRewards = [];
+    for(let i=0;i<partial;i++){
+      state.finalRewards.push(clone(rand(RECOMPENSES)));
+    }
+    document.getElementById("resultTitle").textContent = "💀 Retirada!";
+    document.getElementById("resultText").innerHTML =
+      `L’heroi no ha pogut completar la missió, però torna amb alguna cosa rescatada del camí.`;
+  }
+
+  renderRewards();
+  showScreen("screenResult");
+}
+
+function renderRewards(){
+  const list = document.getElementById("rewardList");
+  const conv = document.getElementById("conversionList");
+  list.innerHTML = "";
+  conv.innerHTML = "";
+
+  const grouped = {};
+  state.finalRewards.forEach(r => {
+    if(!grouped[r.nom]) grouped[r.nom] = {...r, total:0};
+    grouped[r.nom].total += r.quantitat;
+  });
+
+  Object.values(grouped).forEach(r => {
+    const div = document.createElement("div");
+    div.className = "reward-card";
+    div.innerHTML = `<h3>${r.nom}</h3><p class="highlight">Quantitat: ${r.total}</p><p>Convertible en: ${r.converteix.join(" / ")}</p>`;
+    list.appendChild(div);
+
+    const p = document.createElement("p");
+    p.innerHTML = `<b>${r.nom}</b> → ${r.converteix.map(x => `<span class="tag">${x}</span>`).join(" ")}`;
+    conv.appendChild(p);
+  });
+}
+
+function resetGame(){
+  showScreen("screenStart");
+  setPhase("Inici");
+}
+
+</script>
+</body>
+</html>
