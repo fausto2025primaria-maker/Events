@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tauler dels Regnes — Setge PRO V3</title>
+<style>
+body{margin:0;font-family:Georgia,"Times New Roman",serif;background:linear-gradient(135deg,#26170e,#100907);color:white;text-align:center}
+h1{margin:14px 0 4px;font-size:42px;color:#ffe2a1;text-shadow:0 3px 0 #000}
+.subtitle{color:#d8bd80;margin-bottom:10px}
+.toolbar{margin:10px}
+button,select,input{font-family:Georgia,"Times New Roman",serif}
+button{margin:4px;padding:8px 12px;border-radius:10px;border:2px solid #5b3418;background:linear-gradient(#ffe09a,#c58a2c);font-weight:bold;cursor:pointer}
+.board{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;padding:12px}
+.card{background:#f3dfb5;color:#241408;border:5px solid #5b3418;border-radius:18px;padding:10px;box-shadow:0 8px 18px rgba(0,0,0,.4)}
+.card.leader{outline:6px solid gold}
+.escut{width:105px;height:125px;object-fit:cover;border:4px solid #1c0d06;border-radius:12px;background:#111}
+.nom{font-size:22px;font-weight:bold;margin:8px 0;background:#7b2d1e;color:#fff2c6;padding:6px;border-radius:10px}
+.recursos{background:#fff4d2;border:2px solid #8a5a2b;border-radius:12px;padding:8px;margin:8px 0}
+.recurs{display:flex;justify-content:space-between;align-items:center;margin:5px 0;font-size:18px}
+.recurs input{width:62px;text-align:center;font-size:18px;border:2px solid #5b3418;border-radius:8px;padding:3px}
+.risc{background:#ffcfca;border-radius:8px;padding:3px;color:#8b1e13;font-weight:bold}
+.edificis{margin-top:10px;background:#fff8df;border:2px solid #8a5a2b;border-radius:12px;padding:8px;min-height:120px}
+.edificis h3{margin:0 0 6px}
+.edifici{display:flex;justify-content:space-between;align-items:center;background:#ead09b;border:2px solid #7d5029;border-radius:10px;margin:5px 0;padding:5px 7px;font-weight:bold}
+.remove{background:#9e2f24;color:white;border:1px solid #4a100b;box-shadow:none;padding:3px 7px;border-radius:7px}
+.add-box{margin-top:8px;display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.add-box select{max-width:135px;padding:5px;border-radius:8px}
+.total{margin-top:8px;font-weight:bold;font-size:18px;color:#5b241c}
+.info{margin:8px 12px 20px;background:#fff1cc;color:#251508;border:4px solid #5b3418;border-radius:16px;padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:1000px){.board{grid-template-columns:repeat(2,1fr)}.info{grid-template-columns:1fr}}
+@media(max-width:600px){.board{grid-template-columns:1fr}}
+
+/* SETGE PRO V3 */
+const accionsAtacant=[
+{id:"assalt",nom:"⚔️ Assalt frontal",tip:"Dany fort a força i població. Risc alt."},
+{id:"catapultes",nom:"🪨 Catapultes",tip:"Dany a defensa. Pot destruir edificis."},
+{id:"subministraments",nom:"🍞 Tallar subministraments",tip:"Redueix menjar del defensor."},
+{id:"incendi",nom:"🔥 Incendi nocturn",tip:"Crema menjar i causa pànic."},
+{id:"tunel",nom:"🕳️ Excavar túnel",tip:"Pot obrir una bretxa greu."},
+{id:"intimidar",nom:"💀 Intimidar",tip:"Provoca fugues de població."},
+{id:"granges",nom:"🌾 Atacar granges",tip:"Roba menjar exterior."},
+{id:"espionatge",nom:"🕵️ Espionatge",tip:"Bonus al pròxim atac."}
+];
+const accionsDefensor=[
+{id:"muralles",nom:"🏰 Reforçar muralles",tip:"Redueix molt el dany entrant."},
+{id:"arquers",nom:"🏹 Arquers a les torres",tip:"Danya la força atacant."},
+{id:"racionar",nom:"🍲 Racionar menjar",tip:"Estalvia menjar, però desgasta població."},
+{id:"eixida",nom:"🌙 Eixida nocturna",tip:"Ataca el campament enemic."},
+{id:"magatzems",nom:"🧯 Protegir magatzems",tip:"Redueix incendis i saquejos."},
+{id:"curar",nom:"🏥 Curar ferits",tip:"Recupera força defensiva."},
+{id:"reforcos",nom:"📯 Cridar reforços",tip:"Arriben en 3 torns."},
+{id:"negociar",nom:"🕊️ Negociar",tip:"Pot acabar el setge amb pau."}
+];
+const cartesSetge=[
+{nom:"🌧️ Pluja sobre el campament",txt:"La pluja enfanga el terreny i les màquines ataquen pitjor.",fx:(a,d,n)=>{a.forca=clamp(a.forca-2);n.push("🌧️ Carta ESDE: pluja. L'atacant perd 2 força.");}},
+{nom:"🧀 Magatzem secret",txt:"Apareix una reserva amagada dins la ciutat.",fx:(a,d,n)=>{d.menjar+=8;n.push("🧀 Carta ESDE: magatzem secret. El defensor guanya 8 menjar.");}},
+{nom:"🐀 Rates als sacs",txt:"Els sacs de gra estan mossegats.",fx:(a,d,n)=>{d.menjar=clamp(d.menjar-6);n.push("🐀 Carta ESDE: rates als sacs. El defensor perd 6 menjar.");}},
+{nom:"🗡️ Capità ferit",txt:"Un capità cau i la tropa dubta.",fx:(a,d,n)=>{a.forca=clamp(a.forca-4);n.push("🗡️ Carta ESDE: capità atacant ferit. L'atacant perd 4 força.");}},
+{nom:"🙏 Sermó a la muralla",txt:"La població aguanta una nit més.",fx:(a,d,n)=>{d.forca+=4;n.push("🙏 Carta ESDE: sermó a la muralla. El defensor guanya 4 força.");}},
+{nom:"🚪 Porta mal tancada",txt:"Una errada obri una oportunitat perillosa.",fx:(a,d,n)=>{d.forca=clamp(d.forca-5);n.push("🚪 Carta ESDE: porta mal tancada. El defensor perd 5 força.");}},
+{nom:"📦 Caravana capturada",txt:"Els atacants intercepten una caravana.",fx:(a,d,n)=>{a.menjar+=6;d.menjar=clamp(d.menjar-3);n.push("📦 Carta ESDE: caravana capturada. Atacant +6 menjar; defensor -3.");}},
+{nom:"🕯️ Nit sense lluna",txt:"La nit afavoreix sabotatges i eixides.",fx:(a,d,n)=>{a.avantatge+=2;d.avantatgeDef=2;n.push("🕯️ Carta ESDE: nit sense lluna. Bonus tàctic per als dos bàndols.");}}
+];
+let setge=null;
+function clamp(n){return Math.max(0,Math.round(n));}
+function dau(){return Math.floor(Math.random()*6)+1;}
+function comptaEdifici(r,id){return (r.edificis||[]).filter(x=>x===id).length;}
+function bonus(r,t){let b=0;if(t==="muralla")b+=comptaEdifici(r,"muralla")*4+comptaEdifici(r,"castell")*6;if(t==="torres")b+=comptaEdifici(r,"torre")*4+comptaEdifici(r,"muralla")*2;if(t==="hospital")b+=comptaEdifici(r,"esglesia")*3+comptaEdifici(r,"ciutat")*2;if(t==="espies")b+=comptaEdifici(r,"biblioteca")*3+comptaEdifici(r,"universitat")*5;if(t==="maquines")b+=comptaEdifici(r,"caserna")*4+comptaEdifici(r,"castell")*3;if(t==="prestigi")b+=comptaEdifici(r,"esglesia")*2+comptaEdifici(r,"universitat")*2+comptaEdifici(r,"ciutat")*2;if(t==="gestio")b+=comptaEdifici(r,"mercat")*2+comptaEdifici(r,"banc")*2+comptaEdifici(r,"biblioteca")*2;if(t==="forca")b+=Math.floor((r.forca||0)/10);return b;}
+function mostrarSetge(){document.getElementById("setgePanel").style.display="block";omplirSelectorsSetge();document.getElementById("setgeArena").innerHTML='<div class="setge-log"><b>📜 Preparació:</b> tria atacant i defensor. V3 pot jugar amb IA defensora i cartes ESDE cada 2 torns.</div>';document.getElementById("setgePanel").scrollIntoView({behavior:"smooth",block:"start"});}
+function tancarSetgePro(){document.getElementById("setgePanel").style.display="none";}
+function omplirSelectorsSetge(){let a=document.getElementById("setgeAtacant"),d=document.getElementById("setgeDefensor");a.innerHTML="";d.innerHTML="";regnes.forEach((r,i)=>{a.innerHTML+=`<option value="${i}">${r.nom}</option>`;d.innerHTML+=`<option value="${i}">${r.nom}</option>`;});if(regnes.length>1)d.value="1";}
+function copia(i){let r=JSON.parse(JSON.stringify(regnes[i]));r.index=i;r.avantatge=0;r.avantatgeDef=0;r.reforcos=0;r.proteccio=0;r.magatzems=false;return r;}
+function comencarSetgePro(){let ai=parseInt(document.getElementById("setgeAtacant").value),di=parseInt(document.getElementById("setgeDefensor").value);if(ai===di){alert("Un regne no pot assetjar-se a ell mateix.");return;}setge={torn:1,maxTorns:10,iaDef:document.getElementById("setgeIA")?.checked||false,atacant:copia(ai),defensor:copia(di),accA:[],accD:[],log:[`⚔️ Comença el setge: ${regnes[ai].nom} ataca ${regnes[di].nom}.`],acabat:false,resultat:"",eventActual:null};renderSetgePro();}
+function eti(r){if(!r.edificis||!r.edificis.length)return '<span class="badge">Sense edificis</span>';return r.edificis.map(id=>{let e=edificisDisponibles.find(x=>x.id===id);return `<span class="badge">${e?e.nom:id}</span>`}).join("");}
+function boto(b,x){let arr=b==="A"?setge.accA:setge.accD;let disabled=(setge.acabat||(b==="D"&&setge.iaDef));return `<button title="${x.tip}" class="${arr.includes(x.id)?'selected':''}" ${disabled?'disabled':''} onclick="toggleAccioSetge('${b}','${x.id}')">${x.nom}<div class="mini-help">${x.tip}</div></button>`;}
+function barraValor(label,v,max=100){let pct=Math.max(0,Math.min(100,(v/max)*100));return `<div class="stat-pill">${label} ${clamp(v)}<div style="height:8px;background:#d8bd80;border-radius:9px;margin-top:4px"><div style="height:8px;width:${pct}%;background:#7b2d1e;border-radius:9px"></div></div></div>`;}
+function renderSetgePro(){if(!setge)return;let a=setge.atacant,d=setge.defensor;document.getElementById("setgeArena").innerHTML=`<div><span class="torn-pill">Torn ${setge.torn}/${setge.maxTorns}</span><span class="torn-pill">${setge.iaDef?'🤖 Defensor IA':'👥 Defensor manual'}</span></div><div class="setge-grid"><div class="setge-box"><h3>⚔️ ${a.nom} — Atacant</h3><div class="setge-stats">${barraValor('🍞',a.menjar)}${barraValor('⚔️',a.forca)}${barraValor('👥',a.poblacio)}</div>${eti(a)}<p><b>Tria 2 accions d'atac:</b></p><div class="setge-actions">${accionsAtacant.map(x=>boto("A",x)).join("")}</div></div><div class="setge-box"><h3>🛡️ ${d.nom} — Defensor</h3><div class="setge-stats">${barraValor('🍞',d.menjar)}${barraValor('⚔️',d.forca)}${barraValor('👥',d.poblacio)}</div>${eti(d)}<p><b>${setge.iaDef?'La IA triarà 2 defenses.':'Tria 2 accions de defensa:'}</b></p><div class="setge-actions">${accionsDefensor.map(x=>boto("D",x)).join("")}</div></div></div>${setge.eventActual?`<div class="event-card"><b>${setge.eventActual.nom}</b><br>${setge.eventActual.txt}</div>`:''}<div class="setge-controls"><button onclick="resoldreTornSetge()" ${setge.acabat?'disabled':''}>🎲 Resoldre torn ${setge.torn}</button><button onclick="comencarSetgePro()">🔁 Reiniciar setge</button></div>${setge.acabat?`<div class="victoria">${setge.resultat}</div><button onclick="aplicarResultatSetge()">💾 Aplicar resultat al tauler</button>`:''}<div class="setge-log">${setge.log.slice().reverse().map(l=>`<div class="log-line">${l}</div>`).join("")}</div>`;}
+function toggleAccioSetge(b,id){let arr=b==="A"?setge.accA:setge.accD,p=arr.indexOf(id);if(p>=0)arr.splice(p,1);else{if(arr.length>=2){alert("Només pots triar 2 accions per bàndol.");return;}arr.push(id);}renderSetgePro();}
+function triarIAdefensa(){let d=setge.defensor,a=setge.atacant,opc=[];if(d.menjar<15)opc.push("racionar","magatzems");if(d.forca<20)opc.push("curar","muralles");if(a.forca>45)opc.push("muralles","arquers");if(a.menjar<15)opc.push("eixida","arquers");if(setge.torn>=6)opc.push("negociar","reforcos");opc.push("muralles","arquers","magatzems","curar","eixida","reforcos");let res=[];for(let x of opc){if(!res.includes(x))res.push(x);if(res.length===2)break;}return res;}
+function aplicarCartaESDE(n){setge.eventActual=null;if(setge.torn%2===0){let c=cartesSetge[Math.floor(Math.random()*cartesSetge.length)];setge.eventActual=c;c.fx(setge.atacant,setge.defensor,n);}}
+function resoldreTornSetge(){if(setge.iaDef)setge.accD=triarIAdefensa();if(setge.accA.length!==2||setge.accD.length!==2){alert("Tria exactament 2 accions d'atacant i 2 de defensor.");return;}let a=setge.atacant,d=setge.defensor,n=[];d.magatzems=false;d.proteccio=0;aplicarCartaESDE(n);let cA=Math.ceil(a.poblacio/10),cD=Math.ceil(d.poblacio/10);if(comptaEdifici(a,"granja")||comptaEdifici(a,"moli"))cA=Math.max(1,cA-1);if(comptaEdifici(d,"granja")||comptaEdifici(d,"moli"))cD=Math.max(1,cD-1);a.menjar=clamp(a.menjar-cA);d.menjar=clamp(d.menjar-cD);n.push(`🍞 Consum: ${a.nom} -${cA}; ${d.nom} -${cD} menjar.`);
+for(let id of setge.accD){if(id==="muralles"){d.menjar=clamp(d.menjar-1);d.proteccio=6+bonus(d,"muralla")+Math.floor(d.poblacio/20)+(d.avantatgeDef||0);n.push(`🏰 ${d.nom} reforça muralles: protecció +${d.proteccio}.`)}if(id==="racionar"){d.menjar+=Math.ceil(cD/2);d.poblacio=clamp(d.poblacio-1);n.push(`🍲 ${d.nom} raciona i conserva menjar, però perd 1 població.`)}if(id==="magatzems"){d.magatzems=true;n.push(`🧯 ${d.nom} protegeix magatzems.`)}if(id==="curar"){let rec=3+bonus(d,"hospital");d.menjar=clamp(d.menjar-2);d.forca+=rec;n.push(`🏥 ${d.nom} cura ferits: +${rec} força.`)}if(id==="reforcos"){d.menjar=clamp(d.menjar-2);if(!d.reforcos)d.reforcos=3;n.push(`📯 ${d.nom} demana reforços.`)}}
+for(let id of setge.accA){let type={assalt:"forca",catapultes:"maquines",subministraments:"espies",incendi:"espies",tunel:"forca",intimidar:"prestigi",granges:"forca",espionatge:"espies"}[id];let tir=dau()+dau()+bonus(a,type)+a.avantatge;let def=dau()+bonus(d,"muralla")+Math.floor(d.forca/12)+Math.floor(d.poblacio/25)+d.proteccio;if(id==="espionatge"){a.menjar=clamp(a.menjar-1);if(tir>=def){a.avantatge=4;n.push(`🕵️ Espionatge reeixit: ${a.nom} tindrà +4 al pròxim atac.`)}else{a.avantatge=0;n.push(`🕵️ Espies descoberts.`)}continue;}a.avantatge=0;if(id==="catapultes"){a.menjar=clamp(a.menjar-3);a.forca=clamp(a.forca-1)}if(id==="assalt")a.menjar=clamp(a.menjar-2);if(id==="incendi"||id==="granges")a.forca=clamp(a.forca-1);if(id==="tunel")a.menjar=clamp(a.menjar-2);if(tir>=def){if(id==="assalt"){d.forca=clamp(d.forca-8);d.poblacio=clamp(d.poblacio-4);a.forca=clamp(a.forca-2);n.push(`⚔️ Assalt reeixit: ${d.nom} -8 força i -4 població.`)}if(id==="catapultes"){let mal=8+bonus(a,"maquines");d.forca=clamp(d.forca-mal);n.push(`🪨 Catapultes: ${d.nom} -${mal} força.`);if(Math.random()<.25&&d.edificis.length){let perd=d.edificis.pop();n.push(`💥 Edifici destruït: ${perd}.`)}}if(id==="subministraments"){let mal=d.magatzems?4:10;d.menjar=clamp(d.menjar-mal);n.push(`🍞 Subministraments tallats: ${d.nom} -${mal} menjar.`)}if(id==="incendi"){let mal=d.magatzems?2:8;d.menjar=clamp(d.menjar-mal);d.poblacio=clamp(d.poblacio-2);n.push(`🔥 Incendi: ${d.nom} -${mal} menjar i -2 població.`)}if(id==="tunel"){d.forca=clamp(d.forca-12);n.push(`🕳️ Bretxa per túnel: ${d.nom} -12 força.`)}if(id==="intimidar"){d.poblacio=clamp(d.poblacio-3);n.push(`💀 Intimidació: ${d.nom} -3 població.`)}if(id==="granges"){let robat=d.magatzems?3:8;d.menjar=clamp(d.menjar-robat);a.menjar+=Math.ceil(robat/2);n.push(`🌾 Granges saquejades: ${d.nom} -${robat}; ${a.nom} +${Math.ceil(robat/2)} menjar.`)}}else{a.forca=clamp(a.forca-3);n.push(`🛡️ ${d.nom} resisteix ${id}: ${a.nom} -3 força.`)}}
+for(let id of setge.accD){if(id==="arquers"){let mal=4+bonus(d,"torres");a.forca=clamp(a.forca-mal);n.push(`🏹 Arquers: ${a.nom} -${mal} força.`)}if(id==="eixida"){d.forca=clamp(d.forca-1);let t=dau()+bonus(d,"forca")+bonus(d,"torres")+(d.avantatgeDef||0),res=dau()+bonus(a,"forca");if(t>=res){a.forca=clamp(a.forca-7);a.menjar=clamp(a.menjar-5);n.push(`🌙 Eixida reeixida: ${a.nom} -7 força i -5 menjar.`)}else{d.forca=clamp(d.forca-5);n.push(`🌙 Eixida fracassada: ${d.nom} -5 força.`)}}if(id==="negociar"){let op=dau()+bonus(d,"prestigi")+Math.floor(d.menjar/20)-Math.floor(a.forca/20);if(op>=7){setge.acabat=true;setge.resultat=`🕊️ Pau negociada: ${a.nom} es retira amb tribut menor. ${d.nom} conserva la ciutat.`;d.menjar=clamp(d.menjar-5);a.menjar+=5;n.push(`🕊️ La negociació funciona.`)}else n.push(`🕊️ Negociació fallida.`)}}d.avantatgeDef=0;if(a.menjar<=0){a.forca=clamp(a.forca-5);a.poblacio=clamp(a.poblacio-2);n.push(`☠️ Fam atacant: ${a.nom} -5 força i -2 població.`)}if(d.menjar<=0){d.forca=clamp(d.forca-4);d.poblacio=clamp(d.poblacio-5);n.push(`☠️ Fam dins la ciutat: ${d.nom} -4 força i -5 població.`)}if(d.reforcos>0){d.reforcos--;if(d.reforcos===0){let rf=8+bonus(d,"prestigi");d.forca+=rf;n.push(`📯 Arriben reforços: ${d.nom} +${rf} força.`)}}if(!setge.acabat){if(d.forca<=0||d.poblacio<=0){setge.acabat=true;setge.resultat=`⚔️ Victòria de l'atacant: ${a.nom} pren la ciutat de ${d.nom}.`;a.menjar+=10;d.menjar=clamp(d.menjar-15)}else if(a.forca<=0||a.poblacio<=0){setge.acabat=true;setge.resultat=`🛡️ Defensa heroica: ${d.nom} resisteix i ${a.nom} es retira.`;d.forca+=8;a.menjar=clamp(a.menjar-10)}else if(setge.torn>=setge.maxTorns){setge.acabat=true;setge.resultat=`🛡️ Setge esgotat: ${d.nom} ha resistit ${setge.maxTorns} torns.`;d.forca+=5;a.forca=clamp(a.forca-10)}}setge.log.push(`<b>Torn ${setge.torn}</b><br><i>Atacant:</i> ${setge.accA.join(', ')} · <i>Defensor:</i> ${setge.accD.join(', ')}<br>`+n.join("<br>"));setge.torn++;setge.accA=[];setge.accD=[];renderSetgePro();}
+function aplicarResultatSetge(){if(!setge||!setge.acabat)return;let a=setge.atacant,d=setge.defensor;["menjar","or","forca","poblacio"].forEach(k=>{regnes[a.index][k]=clamp(a[k]);regnes[d.index][k]=clamp(d[k]);});regnes[a.index].edificis=a.edificis||[];regnes[d.index].edificis=d.edificis||[];let hist=JSON.parse(localStorage.getItem("historialSetgesV3")||"[]");hist.push({data:new Date().toLocaleString(),resultat:setge.resultat,log:setge.log});localStorage.setItem("historialSetgesV3",JSON.stringify(hist.slice(-20)));guardar(false);render();setge.log.push("💾 Resultat aplicat al tauler general i guardat a l'historial.");renderSetgePro();alert("Resultat del setge aplicat al tauler.");}
+
+render();
+}
+
+function afegirEdifici(i){
+const id=document.getElementById("select"+i).value;
+const edifici=edificisDisponibles.find(e=>e.id===id);
+if(!edifici)return;
+const ok=confirm(`Construir ${edifici.nom}?\nCost: ${edifici.cost} or\nEfecte: ${edifici.efecte}\n\nEs restarà el cost automàticament.`);
+if(!ok)return;
+if(regnes[i].or<edifici.cost){alert("No tens prou or per construir aquest edifici.");return;}
+regnes[i].or-=edifici.cost;
+regnes[i].edificis.push(id);
+aplicarEfecteInstantani(i,id);
+render();
+}
+
+function llevarEdifici(i,idx){
+if(confirm("Vols llevar aquest edifici? No es retornarà el cost.")){
+regnes[i].edificis.splice(idx,1);
+render();
+}
+}
+
+function aplicarEfecteInstantani(i,id){
+if(id==="cases")regnes[i].poblacio+=5;
+if(id==="torre")regnes[i].forca+=5;
+if(id==="vila")regnes[i].poblacio+=10;
+if(id==="muralla")regnes[i].forca+=15;
+if(id==="castell")regnes[i].forca+=20;
+if(id==="ciutat")regnes[i].poblacio+=20;
+if(id==="universitat")regnes[i].or+=15;
+}
+
+function nouTorn(){
+regnes.forEach(r=>{
+r.edificis.forEach(id=>{
+if(id==="granja")r.menjar+=5;
+if(id==="fusta")r.or+=5;
+if(id==="cami")r.or+=5;
+if(id==="moli")r.menjar+=10;
+if(id==="mercat")r.or+=10;
+if(id==="banc")r.or+=20;
+if(id==="caserna")r.forca+=10;
+});
+const consum=Math.ceil(r.poblacio/5)*2;
+r.menjar-=consum;
+if(r.menjar<0){
+r.menjar=0;
+r.poblacio=Math.max(0,r.poblacio-5);
+}
+});
+render();
+alert("Nou torn aplicat: producció dels edificis + consum de menjar.");
+}
+
+function totalRegne(r){return r.menjar+r.or+r.forca*2+r.poblacio*3;}
+
+function marcarLider(mostrar=true){
+document.querySelectorAll(".card").forEach(c=>c.classList.remove("leader"));
+let millor=0;
+regnes.forEach((r,i)=>{if(totalRegne(r)>totalRegne(regnes[millor]))millor=i;});
+const card=document.getElementById("card"+millor);
+if(card)card.classList.add("leader");
+if(mostrar)alert("👑 Líder actual: "+regnes[millor].nom);
+}
+
+function guardar(mostrar=true){
+localStorage.setItem("taulerRegnesEdificis",JSON.stringify(regnes));
+if(mostrar)alert("Dades guardades.");
+}
+
+function reiniciar(){
+if(confirm("Segur que vols reiniciar tot?")){
+localStorage.removeItem("taulerRegnesEdificis");
+regnes=JSON.parse(JSON.stringify(inicial));
+render();
+}
+}
+
+
+/* SETGE PRO */
+const accionsAtacant=[["assalt","⚔️ Assalt frontal"],["catapultes","🪨 Catapultes"],["subministraments","🍞 Tallar subministraments"],["incendi","🔥 Incendi nocturn"],["tunel","🕳️ Excavar túnel"],["intimidar","💀 Intimidar"],["granges","🌾 Atacar granges"],["espionatge","🕵️ Espionatge"]].map(x=>({id:x[0],nom:x[1]}));
+const accionsDefensor=[["muralles","🏰 Reforçar muralles"],["arquers","🏹 Arquers a les torres"],["racionar","🍲 Racionar menjar"],["eixida","🌙 Eixida nocturna"],["magatzems","🧯 Protegir magatzems"],["curar","🏥 Curar ferits"],["reforcos","📯 Cridar reforços"],["negociar","🕊️ Negociar"]].map(x=>({id:x[0],nom:x[1]}));
+let setge=null;
+function clamp(n){return Math.max(0,Math.round(n));}
+function dau(){return Math.floor(Math.random()*6)+1;}
+function comptaEdifici(r,id){return (r.edificis||[]).filter(x=>x===id).length;}
+function bonus(r,t){let b=0;if(t==="muralla")b+=comptaEdifici(r,"muralla")*4+comptaEdifici(r,"castell")*6;if(t==="torres")b+=comptaEdifici(r,"torre")*4+comptaEdifici(r,"muralla")*2;if(t==="hospital")b+=comptaEdifici(r,"esglesia")*3+comptaEdifici(r,"ciutat")*2;if(t==="espies")b+=comptaEdifici(r,"biblioteca")*3+comptaEdifici(r,"universitat")*5;if(t==="maquines")b+=comptaEdifici(r,"caserna")*4+comptaEdifici(r,"castell")*3;if(t==="prestigi")b+=comptaEdifici(r,"esglesia")*2+comptaEdifici(r,"universitat")*2+comptaEdifici(r,"ciutat")*2;if(t==="gestio")b+=comptaEdifici(r,"mercat")*2+comptaEdifici(r,"banc")*2+comptaEdifici(r,"biblioteca")*2;if(t==="forca")b+=Math.floor((r.forca||0)/10);return b;}
+function mostrarSetge(){document.getElementById("setgePanel").style.display="block";omplirSelectorsSetge();document.getElementById("setgeArena").innerHTML='<div class="setge-log"><b>📜 Preparació:</b> tria atacant i defensor. Les dades venen del tauler actual.</div>';document.getElementById("setgePanel").scrollIntoView({behavior:"smooth",block:"start"});}
+function tancarSetgePro(){document.getElementById("setgePanel").style.display="none";}
+function omplirSelectorsSetge(){let a=document.getElementById("setgeAtacant"),d=document.getElementById("setgeDefensor");a.innerHTML="";d.innerHTML="";regnes.forEach((r,i)=>{a.innerHTML+=`<option value="${i}">${r.nom}</option>`;d.innerHTML+=`<option value="${i}">${r.nom}</option>`;});if(regnes.length>1)d.value="1";}
+function copia(i){let r=JSON.parse(JSON.stringify(regnes[i]));r.index=i;r.avantatge=0;r.reforcos=0;r.proteccio=0;r.magatzems=false;return r;}
+function comencarSetgePro(){let ai=parseInt(document.getElementById("setgeAtacant").value),di=parseInt(document.getElementById("setgeDefensor").value);if(ai===di){alert("Un regne no pot assetjar-se a ell mateix.");return;}setge={torn:1,maxTorns:10,atacant:copia(ai),defensor:copia(di),accA:[],accD:[],log:[`⚔️ Comença el setge: ${regnes[ai].nom} ataca ${regnes[di].nom}.`],acabat:false,resultat:""};renderSetgePro();}
+function eti(r){if(!r.edificis||!r.edificis.length)return '<span class="badge">Sense edificis</span>';return r.edificis.map(id=>{let e=edificisDisponibles.find(x=>x.id===id);return `<span class="badge">${e?e.nom:id}</span>`}).join("");}
+function boto(b,x){let arr=b==="A"?setge.accA:setge.accD;return `<button class="${arr.includes(x.id)?'selected':''}" ${setge.acabat?'disabled':''} onclick="toggleAccioSetge('${b}','${x.id}')">${x.nom}</button>`;}
+function renderSetgePro(){if(!setge)return;let a=setge.atacant,d=setge.defensor;document.getElementById("setgeArena").innerHTML=`<div class="setge-grid"><div class="setge-box"><h3>⚔️ ${a.nom} — Atacant</h3><div class="setge-stats"><div class="stat-pill">🍞 ${clamp(a.menjar)}</div><div class="stat-pill">⚔️ ${clamp(a.forca)}</div><div class="stat-pill">👥 ${clamp(a.poblacio)}</div></div>${eti(a)}<p><b>Tria 2 accions d'atac:</b></p><div class="setge-actions">${accionsAtacant.map(x=>boto("A",x)).join("")}</div></div><div class="setge-box"><h3>🛡️ ${d.nom} — Defensor</h3><div class="setge-stats"><div class="stat-pill">🍞 ${clamp(d.menjar)}</div><div class="stat-pill">⚔️ ${clamp(d.forca)}</div><div class="stat-pill">👥 ${clamp(d.poblacio)}</div></div>${eti(d)}<p><b>Tria 2 accions de defensa:</b></p><div class="setge-actions">${accionsDefensor.map(x=>boto("D",x)).join("")}</div></div></div><div class="setge-controls"><button onclick="resoldreTornSetge()" ${setge.acabat?'disabled':''}>🎲 Resoldre torn ${setge.torn}</button><button onclick="comencarSetgePro()">🔁 Reiniciar setge</button></div>${setge.acabat?`<div class="victoria">${setge.resultat}</div><button onclick="aplicarResultatSetge()">💾 Aplicar resultat al tauler</button>`:''}<div class="setge-log">${setge.log.slice().reverse().map(l=>`<div class="log-line">${l}</div>`).join("")}</div>`;}
+function toggleAccioSetge(b,id){let arr=b==="A"?setge.accA:setge.accD,p=arr.indexOf(id);if(p>=0)arr.splice(p,1);else{if(arr.length>=2){alert("Només pots triar 2 accions per bàndol.");return;}arr.push(id);}renderSetgePro();}
+function resoldreTornSetge(){if(setge.accA.length!==2||setge.accD.length!==2){alert("Tria exactament 2 accions d'atacant i 2 de defensor.");return;}let a=setge.atacant,d=setge.defensor,n=[];d.magatzems=false;d.proteccio=0;let cA=Math.ceil(a.poblacio/10),cD=Math.ceil(d.poblacio/10);a.menjar=clamp(a.menjar-cA);d.menjar=clamp(d.menjar-cD);n.push(`🍞 Consum: ${a.nom} -${cA}; ${d.nom} -${cD} menjar.`);for(let id of setge.accD){if(id==="muralles"){d.menjar=clamp(d.menjar-1);d.proteccio=6+bonus(d,"muralla")+Math.floor(d.poblacio/20);n.push(`🏰 ${d.nom} reforça muralles: protecció +${d.proteccio}.`)}if(id==="racionar"){d.menjar+=Math.ceil(cD/2);d.poblacio=clamp(d.poblacio-1);n.push(`🍲 ${d.nom} raciona i conserva menjar, però perd 1 població.`)}if(id==="magatzems"){d.magatzems=true;n.push(`🧯 ${d.nom} protegeix magatzems.`)}if(id==="curar"){let rec=3+bonus(d,"hospital");d.menjar=clamp(d.menjar-2);d.forca+=rec;n.push(`🏥 ${d.nom} cura ferits: +${rec} força.`)}if(id==="reforcos"){d.menjar=clamp(d.menjar-2);d.reforcos=3;n.push(`📯 ${d.nom} demana reforços.`)}}for(let id of setge.accA){let type={assalt:"forca",catapultes:"maquines",subministraments:"espies",incendi:"espies",tunel:"forca",intimidar:"prestigi",granges:"forca",espionatge:"espies"}[id];let tir=dau()+dau()+bonus(a,type)+a.avantatge;let def=dau()+bonus(d,"muralla")+Math.floor(d.forca/12)+Math.floor(d.poblacio/25)+d.proteccio;if(id==="espionatge"){a.menjar=clamp(a.menjar-1);if(tir>=def){a.avantatge=4;n.push(`🕵️ Espionatge reeixit: ${a.nom} tindrà +4 al pròxim atac.`)}else{a.avantatge=0;n.push(`🕵️ Espies descoberts.`)}continue;}a.avantatge=0;if(id==="catapultes"){a.menjar=clamp(a.menjar-3);a.forca=clamp(a.forca-1)}if(id==="assalt")a.menjar=clamp(a.menjar-2);if(id==="incendi"||id==="granges")a.forca=clamp(a.forca-1);if(id==="tunel")a.menjar=clamp(a.menjar-2);if(tir>=def){if(id==="assalt"){d.forca=clamp(d.forca-8);d.poblacio=clamp(d.poblacio-4);a.forca=clamp(a.forca-2);n.push(`⚔️ Assalt reeixit: ${d.nom} -8 força i -4 població.`)}if(id==="catapultes"){let mal=8+bonus(a,"maquines");d.forca=clamp(d.forca-mal);n.push(`🪨 Catapultes: ${d.nom} -${mal} força.`);if(Math.random()<.25&&d.edificis.length){let perd=d.edificis.pop();n.push(`💥 Edifici destruït: ${perd}.`)}}if(id==="subministraments"){let mal=d.magatzems?4:10;d.menjar=clamp(d.menjar-mal);n.push(`🍞 Subministraments tallats: ${d.nom} -${mal} menjar.`)}if(id==="incendi"){let mal=d.magatzems?2:8;d.menjar=clamp(d.menjar-mal);d.poblacio=clamp(d.poblacio-2);n.push(`🔥 Incendi: ${d.nom} -${mal} menjar i -2 població.`)}if(id==="tunel"){d.forca=clamp(d.forca-12);n.push(`🕳️ Bretxa per túnel: ${d.nom} -12 força.`)}if(id==="intimidar"){d.poblacio=clamp(d.poblacio-3);n.push(`💀 Intimidació: ${d.nom} -3 població.`)}if(id==="granges"){let robat=d.magatzems?3:8;d.menjar=clamp(d.menjar-robat);a.menjar+=Math.ceil(robat/2);n.push(`🌾 Granges saquejades: ${d.nom} -${robat}; ${a.nom} +${Math.ceil(robat/2)} menjar.`)}}else{a.forca=clamp(a.forca-3);n.push(`🛡️ ${d.nom} resisteix ${id}: ${a.nom} -3 força.`)}}for(let id of setge.accD){if(id==="arquers"){let mal=4+bonus(d,"torres");a.forca=clamp(a.forca-mal);n.push(`🏹 Arquers: ${a.nom} -${mal} força.`)}if(id==="eixida"){d.forca=clamp(d.forca-1);let t=dau()+bonus(d,"forca")+bonus(d,"torres"),res=dau()+bonus(a,"forca");if(t>=res){a.forca=clamp(a.forca-7);a.menjar=clamp(a.menjar-5);n.push(`🌙 Eixida reeixida: ${a.nom} -7 força i -5 menjar.`)}else{d.forca=clamp(d.forca-5);n.push(`🌙 Eixida fracassada: ${d.nom} -5 força.`)}}if(id==="negociar"){let op=dau()+bonus(d,"prestigi")+Math.floor(d.menjar/20)-Math.floor(a.forca/20);if(op>=7){setge.acabat=true;setge.resultat=`🕊️ Pau negociada: ${a.nom} es retira amb tribut menor. ${d.nom} conserva la ciutat.`;d.menjar=clamp(d.menjar-5);a.menjar+=5;n.push(`🕊️ La negociació funciona.`)}}}if(a.menjar<=0){a.forca=clamp(a.forca-5);a.poblacio=clamp(a.poblacio-2);n.push(`☠️ Fam atacant: ${a.nom} -5 força i -2 població.`)}if(d.menjar<=0){d.forca=clamp(d.forca-4);d.poblacio=clamp(d.poblacio-5);n.push(`☠️ Fam dins la ciutat: ${d.nom} -4 força i -5 població.`)}if(d.reforcos>0){d.reforcos--;if(d.reforcos===0){let rf=8+bonus(d,"prestigi");d.forca+=rf;n.push(`📯 Arriben reforços: ${d.nom} +${rf} força.`)}}if(!setge.acabat){if(d.forca<=0||d.poblacio<=0){setge.acabat=true;setge.resultat=`⚔️ Victòria de l'atacant: ${a.nom} pren la ciutat de ${d.nom}.`;a.menjar+=10;d.menjar=clamp(d.menjar-15)}else if(a.forca<=0||a.poblacio<=0){setge.acabat=true;setge.resultat=`🛡️ Defensa heroica: ${d.nom} resisteix i ${a.nom} es retira.`;d.forca+=8;a.menjar=clamp(a.menjar-10)}else if(setge.torn>=setge.maxTorns){setge.acabat=true;setge.resultat=`🛡️ Setge esgotat: ${d.nom} ha resistit ${setge.maxTorns} torns.`;d.forca+=5;a.forca=clamp(a.forca-10)}}setge.log.push(`<b>Torn ${setge.torn}</b><br>`+n.join("<br>"));setge.torn++;setge.accA=[];setge.accD=[];renderSetgePro();}
+function aplicarResultatSetge(){if(!setge||!setge.acabat)return;let a=setge.atacant,d=setge.defensor;["menjar","or","forca","poblacio"].forEach(k=>{regnes[a.index][k]=clamp(a[k]);regnes[d.index][k]=clamp(d[k]);});regnes[a.index].edificis=a.edificis||[];regnes[d.index].edificis=d.edificis||[];guardar(false);render();setge.log.push("💾 Resultat aplicat al tauler general.");renderSetgePro();alert("Resultat del setge aplicat al tauler.");}
+
+render();
+</script>
+</body>
+</html>
